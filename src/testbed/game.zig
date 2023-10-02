@@ -13,4 +13,5 @@ pub fn getApplicationInformation() antlene.ApplicationInformation {
 
 pub fn init(app: *antlene.Application) anyerror!void {
     std.log.info("Init application {}.{}.{} !", .{ antlene.Version.getMajor(app.version), antlene.Version.getMinor(app.version), antlene.Version.getPatch(app.version) });
+    std.log.info("Engine is running on {s}", .{app.getGraphicAPIVersion()});
 }

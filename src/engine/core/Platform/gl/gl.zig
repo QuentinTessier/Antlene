@@ -1,3 +1,4 @@
+const std = @import("std");
 pub const Types = @import("types.zig");
 
 const win32 = struct {
@@ -3993,4 +3994,38 @@ pub fn initContext(dc: win32.HDC, major: i32, minor: i32) !win32.HGLRC {
     var context = loadFunc.wglCreateContextAttribsARB(dc, null, &context_attribs);
     _ = win32.glMakeCurrent(dc, context);
     return context.?;
+}
+
+pub fn messageCallback(source: u32, t: u32, id: u32, severity: u32, length: i32, message: [*c]const u8, userParam: ?*const anyopaque) callconv(.C) void {
+    _ = userParam;
+    _ = length;
+    const sourceStr: []const u8 = switch (source) {
+        DEBUG_SOURCE_API => "API",
+        DEBUG_SOURCE_WINDOW_SYSTEM => "Window System",
+        DEBUG_SOURCE_SHADER_COMPILER => "Shader Compiler",
+        DEBUG_SOURCE_THIRD_PARTY => "Third Party",
+        DEBUG_SOURCE_APPLICATION => "Application",
+        DEBUG_SOURCE_OTHER => "Other",
+        else => "Unknown",
+    };
+    const typeStr: []const u8 = switch (t) {
+        DEBUG_TYPE_ERROR => "Error",
+        DEBUG_TYPE_DEPRECATED_BEHAVIOR => "Deprecated Behavior",
+        DEBUG_TYPE_UNDEFINED_BEHAVIOR => "Undefined Behavior",
+        DEBUG_TYPE_PORTABILITY => "Portability",
+        DEBUG_TYPE_PERFORMANCE => "Performance",
+        DEBUG_TYPE_MARKER => "Marker",
+        DEBUG_TYPE_PUSH_GROUP => "Push Group",
+        DEBUG_TYPE_POP_GROUP => "Pop Group",
+        DEBUG_TYPE_OTHER => "Other",
+        else => "Unknown",
+    };
+    const severityStr: []const u8 = switch (severity) {
+        DEBUG_SEVERITY_HIGH => "High",
+        DEBUG_SEVERITY_MEDIUM => "Medium",
+        DEBUG_SEVERITY_LOW => "Low",
+        DEBUG_SEVERITY_NOTIFICATION => "Notification",
+        else => "Unknown",
+    };
+    std.log.warn("GL_{s} => {s}:{s} {d} :: {s}", .{ sourceStr, typeStr, severityStr, id, message });
 }
