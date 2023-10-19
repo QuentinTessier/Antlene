@@ -1,10 +1,14 @@
 const std = @import("std");
+const zstbi = @import("zstbi");
 
 pub const Application = @import("application.zig").Application;
 pub const ApplicationInformation = @import("application.zig").ApplicationInformation;
 pub const Version = @import("Version.zig").Version;
 
+pub const Camera = @import("core/Camera.zig").Camera;
+
 pub const GlobalEventBus = @import("core/GlobalEventBus.zig");
+pub const Renderer2D = @import("core/Graphics/Renderer2D.zig");
 
 pub var ApplicationHandle: *Application = undefined;
 
@@ -16,10 +20,13 @@ pub fn entry(appInfo: ApplicationInformation) anyerror!void {
     ApplicationHandle = try allocator.create(Application);
     defer allocator.destroy(ApplicationHandle);
 
+    zstbi.init(allocator);
+    defer zstbi.deinit();
+
     try GlobalEventBus.init(allocator);
     defer GlobalEventBus.deinit(allocator);
 
-    ApplicationHandle.* = try Application.init(allocator, appInfo.name, appInfo.version);
+    ApplicationHandle.* = try Application.init(allocator, appInfo);
     try appInfo.gameInit(ApplicationHandle);
 
     try ApplicationHandle.run();
