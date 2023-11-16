@@ -3,7 +3,6 @@ pub const Types = @import("types.zig");
 
 const win32 = struct {
     usingnamespace @import("std").os.windows;
-    usingnamespace @import("std").os.windows.user32;
     usingnamespace @import("../../Platform/win32/win32_extended.zig");
 };
 
@@ -3940,12 +3939,38 @@ const WGL_CONTEXT_CORE_PROFILE_BIT_ARB = 1;
 
 fn loadWin32OpenGLContext() !LoadFunction {
     var instance = win32.getModuleHandle(null);
-    const wcex = win32.WNDCLASSEXA{ .style = win32.CS_HREDRAW | win32.CS_VREDRAW | win32.CS_OWNDC, .lpfnWndProc = win32.DefWindowProcA, .hInstance = instance, .hIcon = null, .hCursor = null, .hbrBackground = null, .lpszMenuName = null, .lpszClassName = "OpenGl Extension Loader", .hIconSm = null };
-    _ = try win32.registerClassExA(&wcex);
-    var hwnd = try win32.createWindowExA(0, "OpenGl Extension Loader", "OpenGl Extension Loader", 0, win32.CW_USEDEFAULT, win32.CW_USEDEFAULT, win32.CW_USEDEFAULT, win32.CW_USEDEFAULT, null, null, instance, null);
+    const wcex = win32.WNDCLASSEXA{
+        .cbSize = @sizeOf(win32.WNDCLASSEXA),
+        .style = win32.CS_HREDRAW | win32.CS_VREDRAW | win32.CS_OWNDC,
+        .lpfnWndProc = win32.DefWindowProcA,
+        .cbClsExtra = 0,
+        .cbWndExtra = 0,
+        .hInstance = instance,
+        .hIcon = null,
+        .hCursor = null,
+        .hbrBackground = null,
+        .lpszMenuName = null,
+        .lpszClassName = "OpenGl Extension Loader",
+        .hIconSm = null,
+    };
+    _ = win32.registerClassExA(&wcex);
+    var hwnd = win32.createWindowExA(
+        0,
+        "OpenGl Extension Loader",
+        "OpenGl Extension Loader",
+        0,
+        win32.CW_USEDEFAULT,
+        win32.CW_USEDEFAULT,
+        win32.CW_USEDEFAULT,
+        win32.CW_USEDEFAULT,
+        null,
+        null,
+        instance,
+        null,
+    );
     var dc = win32.GetDC(hwnd);
     if (dc == null) {
-        _ = try win32.destroyWindow(hwnd);
+        _ = win32.destroyWindow(hwnd);
         return error.ExtensionLoadFailed;
     }
     var pfd: win32.PIXELFORMATDESCRIPTOR = .{ .nSize = @sizeOf(win32.PIXELFORMATDESCRIPTOR), .nVersion = 1, .iPixelType = win32.PFD_TYPE_RGBA, .dwFlags = win32.PFD_DRAW_TO_WINDOW | win32.PFD_SUPPORT_OPENGL | win32.PFD_DOUBLEBUFFER, .cColorBits = 32, .cAlphaBits = 8, .cDepthBits = 24, .cStencilBits = 8, .iLayerType = win32.PFD_MAIN_PLANE };
@@ -3973,7 +3998,7 @@ fn loadWin32OpenGLContext() !LoadFunction {
         return error.DeleteContextFailed;
     }
     _ = win32.ReleaseDC(hwnd, dc.?);
-    _ = try win32.destroyWindow(hwnd);
+    _ = win32.destroyWindow(hwnd);
     return LoadFunction{ .wglCreateContextAttribsARB = wglCreateContextAttribsARB, .wglChoosePixelFormatARB = wglChoosePixelFormatARB };
 }
 

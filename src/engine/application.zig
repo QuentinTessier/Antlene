@@ -10,6 +10,14 @@ const Graphics = @import("./core/Graphics.zig");
 const Camera = @import("./core/Camera.zig").Camera;
 const Renderer2D = @import("core/Graphics/Renderer2D.zig");
 
+const GameState = @import("core/GameState.zig");
+
+const SceneManager = @import("core/SceneManager.zig").SceneManager;
+
+const TMP = struct {
+    name: []u8,
+};
+
 pub const Application = struct {
     name: [*:0]const u8,
     version: u32,
@@ -19,9 +27,13 @@ pub const Application = struct {
     window: *Window,
     update: *const fn (*Application, deltaTime: f64) anyerror!void,
 
-    userData: ?*anyopaque = null,
+    gameState: GameState.GameStateHandle = undefined,
+
+    sceneManager: SceneManager = .{},
 
     mainCamera: Camera = Camera{ .position = .{ 0.0, 0.0 } },
+
+    internal_destroyGameState: *const fn (*Application) void = undefined,
 
     pub fn init(allocator: std.mem.Allocator, appInfo: ApplicationInformation) !Application {
         var window: *Window = try allocator.create(Window);
@@ -53,12 +65,15 @@ pub const Application = struct {
     }
 
     pub fn deinit(self: *Application, allocator: std.mem.Allocator) void {
+        //self.internal_destroyGameState(self);
         allocator.destroy(self.window);
+        self.sceneManager.deinit(allocator);
         Renderer2D.deinit(self.allocator);
         gl.Types.deinit();
     }
 
     pub fn run(self: *Application) anyerror!void {
+        try self.createGameState(TMP);
         var timer = try std.time.Timer.start();
         var aggregate: f64 = 0.0;
 
@@ -77,7 +92,8 @@ pub const Application = struct {
 
             Graphics.clear();
 
-            try self.update(self, elapsed);
+            try self.sceneManager.updateScene(elapsed);
+            self.sceneManager.drawScene();
 
             self.window.swapBuffers();
         }
@@ -97,6 +113,23 @@ pub const Application = struct {
     pub fn getGraphicAPIVersion(self: *Application) [*:0]const u8 {
         _ = self;
         return gl.getString(gl.VERSION);
+    }
+
+    pub fn createGameState(self: *Application, comptime T: type) !void {
+        self.gameState = try GameState.newGameState(T, self.allocator);
+        //self.internal_destroyGameState = struct {
+        //    fn internal_destroyGameState(app: *Application) void {
+        //        GameState.destroyGameState(T, app.allocator, app.gameState);
+        //    }
+        //}.internal_destroyGameState;
+    }
+
+    pub fn registerScene(self: *Application, comptime T: type, name: []const u8) !void {
+        return self.sceneManager.registerScene(self.allocator, T, name);
+    }
+
+    pub fn updateScene(self: *Application) anyerror!void {
+        try self.sceneManager.updateScene();
     }
 };
 

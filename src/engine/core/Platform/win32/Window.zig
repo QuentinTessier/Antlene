@@ -1,7 +1,6 @@
 const std = @import("std");
 const win32 = struct {
     usingnamespace @import("std").os.windows;
-    usingnamespace @import("std").os.windows.user32;
     usingnamespace @import("win32_extended.zig");
 };
 
@@ -32,10 +31,7 @@ const WIN32_TO_HID: [256]u8 = [256]u8{
 fn wndProc(hwnd: win32.HWND, msg: win32.UINT, wParam: win32.WPARAM, lParam: win32.LPARAM) callconv(win32.WINAPI) win32.LRESULT {
     switch (msg) {
         win32.WM_CLOSE => {
-            win32.destroyWindow(hwnd) catch |err| {
-                std.debug.print("{}\n", .{err});
-                return 1;
-            };
+            _ = win32.destroyWindow(hwnd);
             return 0;
         },
         win32.WM_DESTROY => {
@@ -50,7 +46,7 @@ fn wndProc(hwnd: win32.HWND, msg: win32.UINT, wParam: win32.WPARAM, lParam: win3
             _ = win32.postMessageA(hwnd, win32.WM_RESHAPE, 0, 0);
             return 0;
         },
-        else => return win32.defWindowProcA(hwnd, msg, wParam, lParam),
+        else => return win32.DefWindowProcA(hwnd, msg, wParam, lParam),
     }
 }
 
@@ -80,8 +76,11 @@ pub const Win32Window = struct {
 
         var bBrush = win32.getStockObject(win32.BLACK_BRUSH);
         const wcex = win32.WNDCLASSEXA{
+            .cbSize = @sizeOf(win32.WNDCLASSEXA),
             .style = win32.CS_HREDRAW | win32.CS_VREDRAW,
             .lpfnWndProc = wndProc,
+            .cbClsExtra = 0,
+            .cbWndExtra = 0,
             .hInstance = self.hInstance,
             .hIcon = null,
             .hCursor = null,
@@ -91,8 +90,21 @@ pub const Win32Window = struct {
             .hIconSm = null,
         };
 
-        _ = try win32.registerClassExA(&wcex);
-        self.hwnd = try win32.createWindowExA(0, self.name, self.name, win32.WS_OVERLAPPEDWINDOW | win32.WS_CLIPCHILDREN | win32.WS_CLIPSIBLINGS | win32.WS_SYSMENU | win32.WS_VISIBLE, self.x, self.y, self.width, self.height, null, null, self.hInstance, null);
+        _ = win32.registerClassExA(&wcex);
+        self.hwnd = win32.createWindowExA(
+            0,
+            self.name,
+            self.name,
+            win32.WS_OVERLAPPEDWINDOW | win32.WS_CLIPCHILDREN | win32.WS_CLIPSIBLINGS | win32.WS_SYSMENU | win32.WS_VISIBLE,
+            self.x,
+            self.y,
+            self.width,
+            self.height,
+            null,
+            null,
+            self.hInstance,
+            null,
+        );
         _ = win32.showWindow(self.hwnd, win32.SW_SHOW);
         self.dc = win32.GetDC(self.hwnd) orelse unreachable;
         return true;
@@ -214,7 +226,7 @@ pub const Win32Window = struct {
 
     pub fn pollEvents(self: *Self) !void {
         var msg: win32.MSG = undefined;
-        while (try win32.peekMessageA(&msg, null, 0, 0, win32.PM_REMOVE)) {
+        while (win32.peekMessageA(&msg, null, 0, 0, win32.PM_REMOVE)) {
             _ = win32.translateMessage(&msg);
 
             try self.convertMessage(msg);
