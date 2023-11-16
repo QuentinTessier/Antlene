@@ -14,12 +14,16 @@ pub fn buildGame(b: *std.Build, name: []const u8, root_file: []const u8, target:
     const zmath_pkg = zmath.package(b, target, optimize, .{});
     const zstbi_pkg = zstbi.package(b, target, optimize, .{});
     const znoise_pkg = znoise.package(b, target, optimize, .{});
+
+    const window_system = b.dependency("AntleneWindowSystem", .{});
+
     const engine = b.createModule(.{ .source_file = .{
         .path = thisDir() ++ "/src/engine/antlene.zig",
     }, .dependencies = &.{
         .{ .name = "zmath", .module = zmath_pkg.zmath },
         .{ .name = "zstbi", .module = zstbi_pkg.zstbi },
         .{ .name = "znoise", .module = znoise_pkg.znoise },
+        .{ .name = "AntleneWindowSystem", .module = window_system.module("AntleneWindowSystem") },
     } });
 
     const game = b.createModule(.{ .source_file = .{

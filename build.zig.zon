@@ -1,0 +1,16 @@
+.{
+    .name = "Antlene",
+    .version = "0.1.0",
+    .paths = .{
+        "src/",
+        "build.zig",
+        "build.zig.zon",
+        "LICENSE",
+    },
+    .dependencies = .{
+        .AntleneWindowSystem = .{
+            .url = "https://github.com/QuentinTessier/AntleneWindowSystem/archive/refs/tags/0.1.1.tar.gz",
+            .hash = "12200ef775cab9fb26f7e8d13bd810f1048b243263f19abf021a22d1fb4cd764fae2",
+        },
+    },
+}
