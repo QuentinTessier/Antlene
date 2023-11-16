@@ -1,6 +1,3 @@
 [submodule "extern/zig-gamedev"]
 	path = extern/zig-gamedev
 	url = git@github.com:michal-z/zig-gamedev.git
-[submodule "extern/mach-glfw"]
-	path = extern/mach-glfw
-	url = git@github.com:hexops/mach-glfw.git
