@@ -3,8 +3,7 @@ const std = @import("std");
 const zmath = @import("extern/zig-gamedev/libs/zmath/build.zig");
 const zstbi = @import("extern/zig-gamedev/libs/zstbi/build.zig");
 const znoise = @import("extern/zig-gamedev/libs/znoise/build.zig");
-
-const mach_glfw = @import("extern/mach-glfw/build.zig");
+const zopengl = @import("./extern/zig-gamedev/libs/zopengl/build.zig");
 
 inline fn thisDir() []const u8 {
     return comptime std.fs.path.dirname(@src().file) orelse ".";
@@ -14,6 +13,7 @@ pub fn buildGame(b: *std.Build, name: []const u8, root_file: []const u8, target:
     const zmath_pkg = zmath.package(b, target, optimize, .{});
     const zstbi_pkg = zstbi.package(b, target, optimize, .{});
     const znoise_pkg = znoise.package(b, target, optimize, .{});
+    const zopengl_pkg = zopengl.package(b, target, optimize, .{});
 
     const window_system = b.dependency("AntleneWindowSystem", .{});
 
@@ -23,6 +23,7 @@ pub fn buildGame(b: *std.Build, name: []const u8, root_file: []const u8, target:
         .{ .name = "zmath", .module = zmath_pkg.zmath },
         .{ .name = "zstbi", .module = zstbi_pkg.zstbi },
         .{ .name = "znoise", .module = znoise_pkg.znoise },
+        .{ .name = "zopengl", .module = zopengl_pkg.zopengl },
         .{ .name = "AntleneWindowSystem", .module = window_system.module("AntleneWindowSystem") },
     } });
 

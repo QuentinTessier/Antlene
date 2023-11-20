@@ -11,12 +11,12 @@ pub const GlobalEventBus = @import("core/GlobalEventBus.zig");
 pub const Renderer2D = @import("core/Graphics/Renderer2D.zig");
 
 pub const GameState = @import("core/GameState.zig");
-pub const SceneBase = @import("core/Scene.zig").SceneBase;
+pub const SceneBase = @import("core/SceneManager.zig").SceneBase;
 
 pub var ApplicationHandle: *Application = undefined;
 
 pub fn entry(appInfo: ApplicationInformation) anyerror!void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa = std.heap.GeneralPurposeAllocator(.{ .verbose_log = true }){};
     defer _ = gpa.deinit();
 
     const allocator = gpa.allocator();

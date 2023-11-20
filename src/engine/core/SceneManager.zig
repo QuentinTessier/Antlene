@@ -27,18 +27,19 @@ pub const SceneManager = struct {
             var scene = item.value_ptr.*;
             scene.internal_free(scene, allocator);
         }
+        self.scenes.deinit(allocator);
     }
 
     pub fn registerScene(self: *SceneManager, allocator: std.mem.Allocator, comptime T: type, name: []const u8) !*SceneBase {
-        comptime {
-            if (!@hasField(T, "base") || std.meta.fieldInfo(T, std.meta.FieldEnum(T).base).type != SceneBase) {
-                @panic("Trying to add a Scene without a base or of wrong time, use the antlene interface to create a Scene");
-            }
-        }
+        //comptime {
+        //    if (!@hasField(T, "base") or std.meta.fieldInfo(T, std.meta.FieldEnum(T).base).type != SceneBase) {
+        //        @panic("Trying to add a Scene without a base or of wrong time, use the antlene interface to create a Scene");
+        //    }
+        //}
 
         var scene = try allocator.create(T);
         if (@hasDecl(T, "init")) {
-            scene = try T.init(allocator);
+            try T.init(scene, allocator);
         }
         scene.base = .{
             .name = name,
@@ -47,7 +48,7 @@ pub const SceneManager = struct {
                     var parent = @fieldParentPtr(T, "base", base);
                     base.textures.deinit(a);
                     base.sprites.deinit(a);
-                    a.free(parent);
+                    a.destroy(parent);
                 }
             }.free,
             .onUpdate = if (@hasDecl(T, "onUpdate")) &T.onUpdate else null,

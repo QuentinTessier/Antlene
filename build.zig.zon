@@ -9,8 +9,8 @@
     },
     .dependencies = .{
         .AntleneWindowSystem = .{
-            .url = "https://github.com/QuentinTessier/AntleneWindowSystem/archive/refs/tags/0.1.1.tar.gz",
-            .hash = "12200ef775cab9fb26f7e8d13bd810f1048b243263f19abf021a22d1fb4cd764fae2",
+            .url = "https://github.com/QuentinTessier/AntleneWindowSystem/archive/refs/tags/0.1.2.tar.gz",
+            .hash = "1220cf8b84ef2557d17f15ceb599e710fad5ebc44f7b439c3dd5d359a7be096ef51b",
         },
     },
 }

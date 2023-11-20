@@ -1,5 +1,5 @@
 const std = @import("std");
-const EventBus = @import("EventHandling/EventBus.zig").EventBus;
+pub const EventBus = @import("EventHandling/EventBus.zig").EventBus;
 
 var initialized: bool = false;
 var a: std.mem.Allocator = undefined;
@@ -31,4 +31,8 @@ pub fn listen(comptime T: type, listener: anytype, callback: anytype) !void {
 
 pub fn broadcast(comptime T: type, sender: ?*anyopaque, data: T) void {
     eventbus.broadcast(T, sender, data);
+}
+
+pub fn getPtr() *EventBus {
+    return eventbus;
 }

@@ -1,4 +1,6 @@
 const std = @import("std");
+const CloseEvent = @import("../Platform/Window.zig").CloseEvent;
+const Window = @import("../Platform/Window.zig").Window;
 
 pub const EventBus = struct {
     pub const EventCallback = *const fn (listener: *anyopaque, sender: ?*anyopaque, data: *const anyopaque) void;
@@ -83,5 +85,9 @@ pub const EventBus = struct {
             std.log.warn("Trying to get a view to a not registered event type {s}", .{name});
             return error.UnknowEvent;
         }
+    }
+
+    pub fn onCloseEvent(self: *EventBus, window: *Window) void {
+        self.broadcast(CloseEvent, window, void{});
     }
 };
