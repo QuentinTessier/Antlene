@@ -1,0 +1,15 @@
+.{
+    .name = "Antlene",
+    .version = "0.1.0",
+    .paths = .{
+        "extern/",
+        "src/",
+        ".gitignore",
+        ".gitmodules",
+        "build.zig",
+        "build.zig.zon",
+        "LICENSE",
+        "README.md",
+    },
+    .dependencies = .{},
+}
