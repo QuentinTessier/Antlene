@@ -47,6 +47,14 @@ pub fn switchScene(self: *SceneManager, name: []const u8) bool {
     return false;
 }
 
+pub fn drawSceneGUI(self: *SceneManager) void {
+    if (self.currentScene) |currentScene| {
+        if (currentScene.onGUI) |onGUI| {
+            onGUI(currentScene);
+        }
+    }
+}
+
 pub fn drawScene(self: *SceneManager) void {
     if (self.currentScene) |currentScene| {
         if (currentScene.onDraw) |onDraw| {
@@ -58,9 +66,6 @@ pub fn drawScene(self: *SceneManager) void {
 
 pub fn updateScene(self: *SceneManager, deltaTime: f32) void {
     if (self.currentScene) |currentScene| {
-        _ = ecs.progress(currentScene.world, deltaTime);
-        if (currentScene.onUpdate) |onUpdate| {
-            onUpdate(currentScene, deltaTime);
-        }
+        currentScene.update(deltaTime);
     }
 }

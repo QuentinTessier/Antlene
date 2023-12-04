@@ -41,12 +41,12 @@ pub const Application = struct {
     }
 
     pub fn run(self: *Application) anyerror!void {
-        _ = self;
         while (!rl.WindowShouldClose()) {
+            self.sceneManager.updateScene(rl.GetFrameTime());
+
             rl.BeginDrawing();
-
             rl.ClearBackground(rl.BLACK);
-
+            self.sceneManager.drawSceneGUI();
             rl.EndDrawing();
         }
     }

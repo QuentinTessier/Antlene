@@ -1,13 +1,15 @@
 const std = @import("std");
 const ecs = @import("zflecs");
 
-//fn DefineWorld(world: *ecs.world_t) void {
-//    inline for (Systems.RendererSystem.ComponentTypes) |t| {
-//        ecs.COMPONENT(world, t);
-//    }
-//    Systems.RendererSystem.QueryDescription(world);
-//    Systems.UpdateSystem.QueryDescription(world);
-//}
+const Graphics = @import("Graphics.zig");
+
+const Components = @import("./ECS/Components.zig");
+
+fn DefineWorld(world: *ecs.world_t) void {
+    Components.RegisterComponents(world);
+    Components.DefineSingleton(world);
+    Components.RegisterSystems(world);
+}
 
 pub const Scene = struct {
     name: []const u8,
@@ -21,6 +23,8 @@ pub const Scene = struct {
 
     onUpdate: ?*const fn (*Scene, f32) void = null,
     onDraw: ?*const fn (*Scene) void = null,
+
+    onGUI: ?*const fn (*Scene) void = null,
 
     pub fn EnsureTypeDefinition(comptime SceneType: type) void {
         const fieldEnum = std.meta.FieldEnum(SceneType);
@@ -49,7 +53,9 @@ pub const Scene = struct {
             .onDestroy = if (@hasDecl(T, "onDestroy")) &T.onDestroy else null,
             .onUpdate = if (@hasDecl(T, "onUpdate")) &T.onUpdate else null,
             .onDraw = if (@hasDecl(T, "onDraw")) &T.onDraw else null,
+            .onGUI = if (@hasDecl(T, "onGUI")) &T.onGUI else null,
         };
+        DefineWorld(ptr.base.world);
         T.init(ptr);
         return ptr;
     }
@@ -63,5 +69,27 @@ pub const Scene = struct {
         if (self.onDraw) |drawFn| {
             drawFn(self);
         }
+    }
+
+    pub fn update(self: *Scene, deltaTime: f32) void {
+        if (self.onUpdate) |onUpdate| {
+            onUpdate(self, deltaTime);
+        }
+        _ = ecs.progress(self.world, deltaTime);
+    }
+
+    // Atlas Management
+    pub fn addAtlas(self: *Scene, allocator: std.mem.Allocator, name: []const u8, atlas: Components.Atlas) !void {
+        if (ecs.get_mut(self.world, ecs.id(Components.AtlasStorage), Components.AtlasStorage)) |*atlasStorage| {
+            try atlasStorage.*.put(allocator, name, atlas);
+        }
+    }
+
+    // Add Sprite
+    pub fn newSprite(self: *Scene, position: @Vector(2, f32), size: @Vector(2, f32)) ecs.entity_t {
+        const e = ecs.new_id(self.world);
+        _ = ecs.set(self.world, e, Components.Transform, .{ .position = position, .scale = size, .rotation = 0 });
+        _ = ecs.set(self.world, e, Components.SpriteRenderer, .{ .order = 0 });
+        return e;
     }
 };

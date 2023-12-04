@@ -1,5 +1,6 @@
 const std = @import("std");
 const raylib = @import("extern/raylib.zig/build.zig");
+const raygui = @import("extern/raygui/build.zig");
 const zflecs = @import("extern/zig-gamedev/libs/zflecs/build.zig");
 
 pub fn buildAntleneGame(
@@ -18,6 +19,7 @@ pub fn buildAntleneGame(
         .optimize = optimize,
     });
     raylib.addTo(b, exe, target, optimize);
+    raygui.addTo(b, exe, target, optimize);
 
     const zflecs_pkg = zflecs.package(b, target, optimize, .{});
     zflecs_pkg.link(exe);
@@ -28,6 +30,7 @@ pub fn buildAntleneGame(
         },
         .dependencies = &.{
             .{ .name = "raylib", .module = exe.modules.get("raylib") orelse unreachable },
+            .{ .name = "raygui", .module = exe.modules.get("raygui") orelse unreachable },
             .{ .name = "zflecs", .module = zflecs_pkg.zflecs },
         },
     });
@@ -37,7 +40,6 @@ pub fn buildAntleneGame(
         },
         .dependencies = &.{
             .{ .name = "antlene", .module = engine },
-            //.{ .name = "zflecs", .module = zflecs_pkg.zflecs },
         },
     });
     exe.addModule("antlene", engine);
