@@ -1,9 +1,0 @@
-[submodule "extern/raylib.zig"]
-	path = extern/raylib.zig
-	url = git@github.com:ryupold/raylib.zig.git
-[submodule "extern/zig-gamedev"]
-	path = extern/zig-gamedev
-	url = git@github.com:michal-z/zig-gamedev.git
-[submodule "extern/raygui"]
-	path = extern/raygui
-	url = https://github.com/ryupold/raygui.zig
