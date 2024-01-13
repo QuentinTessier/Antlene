@@ -2,3 +2,4 @@ zig-cache
 zig-out
 AntleneRenderDocConfig.cap
 .vscode
+RenderDocSettings.cap

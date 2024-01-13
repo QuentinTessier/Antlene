@@ -11,5 +11,10 @@
         "LICENSE",
         "README.md",
     },
-    .dependencies = .{},
+    .dependencies = .{
+        .mach_glfw = .{
+            .url = "https://pkg.machengine.org/mach-glfw/8953217f28f5eb65ad7888504f108515cc33abfd.tar.gz",
+            .hash = "122032ff418078c202b583daf950c5f186ad79d6d96ce7548b3e656ca36b009e11c3",
+        },
+    },
 }

@@ -1,12 +1,6 @@
 const std = @import("std");
 
-pub fn buildAntleneGame(
-    b: *std.Build,
-    name: []const u8,
-    root_file: []const u8,
-    target: std.zig.CrossTarget,
-    optimize: std.builtin.Mode,
-) *std.Build.CompileStep {
+pub fn buildAntleneGame(b: *std.Build, name: []const u8, root_file: []const u8, target: std.Build.ResolvedTarget, optimize: std.builtin.Mode) *std.Build.Step.Compile {
     const exe = b.addExecutable(.{
         .name = name,
         .root_source_file = .{
@@ -16,22 +10,36 @@ pub fn buildAntleneGame(
         .optimize = optimize,
     });
 
+    const opengl = b.createModule(.{
+        .root_source_file = .{
+            .path = "extern/gl/gl4_6.zig",
+        },
+    });
+
+    // Use mach-glfw
+    const glfw_dep = b.dependency("mach_glfw", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const glfw = glfw_dep.module("mach-glfw");
+    exe.root_module.addImport("mach-glfw", glfw);
+    @import("mach_glfw").addPaths(exe);
+
     const engine = b.createModule(.{
-        .source_file = .{
+        .root_source_file = .{
             .path = "src/engine/Antlene.zig",
         },
-        .dependencies = &.{},
     });
+    engine.addImport("gl", opengl);
+    engine.addImport("mach-glfw", glfw);
     const game = b.createModule(.{
-        .source_file = .{
+        .root_source_file = .{
             .path = root_file,
         },
-        .dependencies = &.{
-            .{ .name = "antlene", .module = engine },
-        },
     });
-    exe.addModule("antlene", engine);
-    exe.addModule("game", game);
+    game.addImport("Antlene", engine);
+    exe.root_module.addImport("antlene", engine);
+    exe.root_module.addImport("game", game);
     return exe;
 }
 
