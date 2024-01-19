@@ -16,6 +16,8 @@ pub fn buildAntleneGame(b: *std.Build, name: []const u8, root_file: []const u8, 
         },
     });
 
+    const zigimg_dep = b.dependency("zigimg", .{});
+    const zigimg = zigimg_dep.module("zigimg");
     // Use mach-glfw
     const glfw_dep = b.dependency("mach_glfw", .{
         .target = target,
@@ -25,6 +27,18 @@ pub fn buildAntleneGame(b: *std.Build, name: []const u8, root_file: []const u8, 
     exe.root_module.addImport("mach-glfw", glfw);
     @import("mach_glfw").addPaths(exe);
 
+    const ecs_dep = b.dependency("mach_ecs", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const ecs = ecs_dep.module("mach-ecs");
+
+    const math_dep = b.dependency("AntleneMath", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const math = math_dep.module("AntleneMath");
+
     const engine = b.createModule(.{
         .root_source_file = .{
             .path = "src/engine/Antlene.zig",
@@ -32,6 +46,10 @@ pub fn buildAntleneGame(b: *std.Build, name: []const u8, root_file: []const u8, 
     });
     engine.addImport("gl", opengl);
     engine.addImport("mach-glfw", glfw);
+    engine.addImport("zigimg", zigimg);
+    engine.addImport("mach-ecs", ecs);
+    engine.addImport("AntleneMath", math);
+
     const game = b.createModule(.{
         .root_source_file = .{
             .path = root_file,

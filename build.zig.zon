@@ -12,9 +12,21 @@
         "README.md",
     },
     .dependencies = .{
+        .AntleneMath = .{
+            .url = "https://github.com/QuentinTessier/AntleneMath/archive/a66e731c7ba581716f9a9a0ee51fc77504d0e627.tar.gz",
+            .hash = "12205a5b0c1eccfb70996f36e3934480881a926bf778f495151ce34b54f159248b18",
+        },
         .mach_glfw = .{
             .url = "https://pkg.machengine.org/mach-glfw/8953217f28f5eb65ad7888504f108515cc33abfd.tar.gz",
             .hash = "122032ff418078c202b583daf950c5f186ad79d6d96ce7548b3e656ca36b009e11c3",
+        },
+        .mach_ecs = .{
+            .url = "https://pkg.machengine.org/mach-ecs/2b921e55de07c3554a5490fca29738104ab07b37.tar.gz",
+            .hash = "1220a5785894922edb70e84f5e00917defbffc64ee16e88cc8fdb3ccf68c9b244a5d",
+        },
+        .zigimg = .{
+            .url = "https://github.com/zigimg/zigimg/archive/ad6ad042662856f55a4d67499f1c4606c9951031.tar.gz",
+            .hash = "1220bf6b616ca219f95be1205b12aa8cdb7e09838fcebeae90b48b5ab0a030c5ab45",
         },
     },
 }

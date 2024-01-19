@@ -22,8 +22,9 @@ pub fn entry() !void {
     }
     defer glfw.terminate();
 
-    var application = try Application.init(allocator, "Antlene", 800, 800);
-    defer application.deinit();
+    var application = try Application.init(allocator);
 
-    try application.run();
+    while (try application.update()) {}
+
+    try application.deinit();
 }
