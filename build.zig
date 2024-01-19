@@ -1,15 +1,6 @@
 const std = @import("std");
-const raylib = @import("extern/raylib.zig/build.zig");
-const raygui = @import("extern/raygui/build.zig");
-const zflecs = @import("extern/zig-gamedev/libs/zflecs/build.zig");
 
-pub fn buildAntleneGame(
-    b: *std.Build,
-    name: []const u8,
-    root_file: []const u8,
-    target: std.zig.CrossTarget,
-    optimize: std.builtin.Mode,
-) *std.Build.CompileStep {
+pub fn buildAntleneGame(b: *std.Build, name: []const u8, root_file: []const u8, target: std.Build.ResolvedTarget, optimize: std.builtin.Mode) *std.Build.Step.Compile {
     const exe = b.addExecutable(.{
         .name = name,
         .root_source_file = .{
@@ -18,32 +9,55 @@ pub fn buildAntleneGame(
         .target = target,
         .optimize = optimize,
     });
-    raylib.addTo(b, exe, target, optimize);
-    raygui.addTo(b, exe, target, optimize);
 
-    const zflecs_pkg = zflecs.package(b, target, optimize, .{});
-    zflecs_pkg.link(exe);
+    const opengl = b.createModule(.{
+        .root_source_file = .{
+            .path = "extern/gl/gl4_6.zig",
+        },
+    });
+
+    const zigimg_dep = b.dependency("zigimg", .{});
+    const zigimg = zigimg_dep.module("zigimg");
+    // Use mach-glfw
+    const glfw_dep = b.dependency("mach_glfw", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const glfw = glfw_dep.module("mach-glfw");
+    exe.root_module.addImport("mach-glfw", glfw);
+    @import("mach_glfw").addPaths(exe);
+
+    const ecs_dep = b.dependency("mach_ecs", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const ecs = ecs_dep.module("mach-ecs");
+
+    const math_dep = b.dependency("AntleneMath", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const math = math_dep.module("AntleneMath");
 
     const engine = b.createModule(.{
-        .source_file = .{
+        .root_source_file = .{
             .path = "src/engine/Antlene.zig",
         },
-        .dependencies = &.{
-            .{ .name = "raylib", .module = exe.modules.get("raylib") orelse unreachable },
-            .{ .name = "raygui", .module = exe.modules.get("raygui") orelse unreachable },
-            .{ .name = "zflecs", .module = zflecs_pkg.zflecs },
-        },
     });
+    engine.addImport("gl", opengl);
+    engine.addImport("mach-glfw", glfw);
+    engine.addImport("zigimg", zigimg);
+    engine.addImport("mach-ecs", ecs);
+    engine.addImport("AntleneMath", math);
+
     const game = b.createModule(.{
-        .source_file = .{
+        .root_source_file = .{
             .path = root_file,
         },
-        .dependencies = &.{
-            .{ .name = "antlene", .module = engine },
-        },
     });
-    exe.addModule("antlene", engine);
-    exe.addModule("game", game);
+    game.addImport("Antlene", engine);
+    exe.root_module.addImport("antlene", engine);
+    exe.root_module.addImport("game", game);
     return exe;
 }
 
