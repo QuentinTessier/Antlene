@@ -24,7 +24,9 @@ pub fn entry() !void {
 
     var application = try Application.init(allocator);
 
-    while (try application.update()) {}
+    while (try application.update()) {
+        try application.draw();
+    }
 
     try application.deinit();
 }

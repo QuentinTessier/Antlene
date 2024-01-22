@@ -3,7 +3,14 @@ const glfw = @import("mach-glfw");
 const gl = @import("gl");
 const ecs = @import("mach-ecs");
 
+const MeshPipeline = @import("graphics/MeshPipeline.zig");
+const GraphicContext = @import("graphics/Context.zig");
+
 const AntleneLogger = std.log.scoped(.Antlene);
+
+pub fn glGetProcAddress(_: void, proc: [:0]const u8) ?gl.FunctionPointer {
+    return glfw.getProcAddress(proc);
+}
 
 pub const Engine = struct {
     isRunning: bool,
@@ -11,10 +18,6 @@ pub const Engine = struct {
 
     pub const name = .engine;
     pub const logger = std.log.scoped(name);
-
-    fn glGetProcAddress(_: void, proc: [:0]const u8) ?gl.FunctionPointer {
-        return glfw.getProcAddress(proc);
-    }
 
     pub const local = struct {
         pub fn init(world: *World) !void {
@@ -29,9 +32,12 @@ pub const Engine = struct {
             };
             glfw.makeContextCurrent(state.window);
 
+            // TODO: Move this code, so the engine is backend agnostic.
+
             state.isRunning = true;
             logger.info("Engine initialization finished, starting sub modules initialization.", .{});
             try world.send(null, .init, .{});
+            try world.send(.graphic_context, .setClearColor, .{@Vector(4, f32){ 0, 0, 0, 1 }});
         }
 
         pub fn deinit(world: *World) !void {
@@ -49,10 +55,15 @@ pub const Engine = struct {
             try world.send(null, .tick, .{});
         }
 
+        pub fn draw(world: *World) !void {
+            try world.send(.mesh_pipeline, .prepareFrame, .{});
+            try world.send(.mesh_pipeline, .drawMeshes, .{});
+        }
+
         pub fn present(engine: *World.Mod(Engine)) !void {
             engine.state.window.swapBuffers();
         }
     };
 };
 
-pub const World = ecs.World(.{Engine});
+pub const World = ecs.World(.{ Engine, GraphicContext, MeshPipeline });
