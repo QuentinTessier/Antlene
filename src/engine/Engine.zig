@@ -4,12 +4,18 @@ const gl = @import("gl");
 const ecs = @import("mach-ecs");
 
 const MeshPipeline = @import("graphics/MeshPipeline.zig");
-const GraphicContext = @import("graphics/Context.zig");
+const GraphicContext = @import("graphics/Context.zig").GraphicContext;
+const Application = @import("Application.zig");
 
 const AntleneLogger = std.log.scoped(.Antlene);
 
 pub fn glGetProcAddress(_: void, proc: [:0]const u8) ?gl.FunctionPointer {
     return glfw.getProcAddress(proc);
+}
+
+fn glfwOnWindowResize(window: glfw.Window, width: u32, height: u32) void {
+    var app: *Application = window.getUserPointer(Application) orelse unreachable;
+    app.world.send(.graphic_context, .resize, .{ width, height }) catch {};
 }
 
 pub const Engine = struct {
@@ -20,7 +26,7 @@ pub const Engine = struct {
     pub const logger = std.log.scoped(name);
 
     pub const local = struct {
-        pub fn init(world: *World) !void {
+        pub fn init(world: *World, app: *Application) !void {
             const state = &world.mod.engine.state;
             state.window = glfw.Window.create(1280, 720, "Antlene", null, null, .{
                 .opengl_profile = .opengl_core_profile,
@@ -31,6 +37,10 @@ pub const Engine = struct {
                 return error.FailedToInitializeWindow;
             };
             glfw.makeContextCurrent(state.window);
+
+            const window: glfw.Window = state.window;
+            window.setUserPointer(app);
+            window.setFramebufferSizeCallback(glfwOnWindowResize);
 
             // TODO: Move this code, so the engine is backend agnostic.
 
@@ -56,7 +66,7 @@ pub const Engine = struct {
         }
 
         pub fn draw(world: *World) !void {
-            try world.send(.mesh_pipeline, .prepareFrame, .{});
+            try world.send(null, .prepareFrame, .{});
             try world.send(.mesh_pipeline, .drawMeshes, .{});
         }
 

@@ -23,6 +23,7 @@ pub fn entry() !void {
     defer glfw.terminate();
 
     var application = try Application.init(allocator);
+    defer allocator.destroy(application);
 
     while (try application.update()) {
         try application.draw();

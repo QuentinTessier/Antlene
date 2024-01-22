@@ -18,10 +18,24 @@ pub const FlyingCamera = struct {
     yaw: f32,
     pitch: f32,
 
-    isDirty: bool = true,
-    isActive: bool = true, // TODO: Use ECS to tag the active camera
+    fovy: f32,
+    near: f32,
+    far: f32,
+    aspect_ratio: f32,
 
-    pub fn init(position: @Vector(3, f32), up: @Vector(3, f32), front: @Vector(3, f32), yaw: f32, pitch: f32) FlyingCamera {
+    isDirty: bool = true,
+
+    pub fn init(
+        position: @Vector(3, f32),
+        up: @Vector(3, f32),
+        front: @Vector(3, f32),
+        yaw: f32,
+        pitch: f32,
+        fovy: f32,
+        near: f32,
+        far: f32,
+        aspect_ratio: f32,
+    ) FlyingCamera {
         var camera = FlyingCamera{
             .position = position,
             .front = front,
@@ -30,6 +44,10 @@ pub const FlyingCamera = struct {
             .up = .{ 0, 0, 0 },
             .yaw = yaw,
             .pitch = pitch,
+            .fovy = fovy,
+            .near = near,
+            .far = far,
+            .aspect_ratio = aspect_ratio,
         };
         camera.updateVectors();
         return camera;
@@ -48,6 +66,10 @@ pub const FlyingCamera = struct {
 
     pub fn getViewMatrix(self: FlyingCamera) Math.mat4x4 {
         return Math.lookAt(self.position, self.position + self.front, self.up);
+    }
+
+    pub fn getProjectionMatrix(self: FlyingCamera) Math.mat4x4 {
+        return Math.perspective(Math.degreesToRadians(f32, self.fovy), self.aspect_ratio, self.near, self.far);
     }
 
     pub fn translate(self: *FlyingCamera, dir: Direction, velocity: f32) void {

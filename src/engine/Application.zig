@@ -7,25 +7,37 @@ const World = @import("Engine.zig").World;
 
 // TMP
 const Math = @import("AntleneMath");
-const Mesh = @import("graphics/Context.zig");
+const Mesh = @import("graphics/Context.zig").GraphicContext;
 const Camera = @import("graphics/Camera.zig").FlyingCamera;
 
 pub const Application = @This();
 
 world: World,
 
-pub fn init(allocator: std.mem.Allocator) !Application {
-    var app = Application{
+pub fn init(allocator: std.mem.Allocator) !*Application {
+    var app = try allocator.create(Application);
+    app.* = Application{
         .world = try World.init(allocator),
     };
-    try app.world.send(.engine, .init, .{});
+    try app.world.send(.engine, .init, .{app});
 
     const p = try app.world.entities.new();
     try app.world.entities.setComponent(p, .graphic_context, .mesh, Mesh.Cube());
     try app.world.entities.setComponent(p, .mesh_pipeline, .transform, Math.Mat4x4.identity());
 
     const c = try app.world.entities.new();
-    try app.world.entities.setComponent(c, .graphic_context, .camera, Camera.init(.{ 0, 0, 3 }, .{ 0, 1, 0 }, .{ 0, 0, -1 }, -90.0, 0.0));
+    try app.world.entities.setComponent(c, .graphic_context, .camera, Camera.init(
+        .{ 0, 0, 5 },
+        .{ 0, 1, 0 },
+        .{ 0, 0, -1 },
+        -90.0,
+        0.0,
+        45.0,
+        0.1,
+        100.0,
+        1280.0 / 720.0,
+    ));
+    try app.world.entities.setComponent(c, .graphic_context, .active, true);
 
     return app;
 }
