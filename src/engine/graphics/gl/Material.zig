@@ -6,5 +6,6 @@ pub const Material = @This();
 
 diffuse: Texture,
 specular: Texture,
-ambient: Math.vec3,
+normal: Texture,
 shininess: f32,
+tilingFactor: f32 = 1.0,

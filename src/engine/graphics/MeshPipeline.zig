@@ -3,7 +3,7 @@ const ecs = @import("mach-ecs");
 const gl = @import("gl");
 const Math = @import("AntleneMath");
 const Context = @import("Context.zig").GraphicContext;
-const World = @import("../Engine.zig").World;
+const World = @import("../core/Engine.zig").World;
 const Mesh = @import("Context.zig").GraphicContext.Mesh;
 const Material = @import("gl/Material.zig");
 
@@ -20,10 +20,9 @@ pub const components = struct {
 };
 
 const MeshData = extern struct {
-    ambient: Math.vec4 align(16),
-    shininess: Math.vec4 align(16),
     model: Math.mat4x4 align(16),
-    normal: Math.mat4x4 align(16), // Is a mat3x3 matrix stored in a mat4x4 for padding
+    shininess: f32 align(4),
+    tilingFactor: f32 align(4),
 };
 
 const MeshUniformBuffer = Context.UniformBuffer(MeshData, 1);
@@ -87,11 +86,14 @@ fn internal_drawMesh(self: *Module, mesh: Mesh, transform: Math.mat4x4, material
     const meshData: MeshUniformBuffer = self.state.meshData;
 
     meshData.update(.{
-        .ambient = Math.Vec4.init(.{ .x = material.ambient[0], .y = material.ambient[1], .z = material.ambient[2], .w = 1 }),
-        .shininess = Math.Vec4.splat(material.shininess),
+        .shininess = material.shininess,
         .model = transform,
-        .normal = transform, // TODO: Inverse
+        .tilingFactor = material.tilingFactor,
     });
-    gl.bindTextures(0, 2, @ptrCast(&.{ material.diffuse.handle, material.specular.handle }));
+    gl.bindTextures(0, 3, @ptrCast(&.{
+        material.diffuse.handle,
+        material.specular.handle,
+        material.normal.handle,
+    }));
     mesh.draw();
 }

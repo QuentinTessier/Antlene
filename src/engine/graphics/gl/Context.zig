@@ -2,12 +2,12 @@ const std = @import("std");
 const gl = @import("gl");
 const Math = @import("AntleneMath");
 
-const World = @import("../../Engine.zig").World;
+const World = @import("../../core/Engine.zig").World;
 pub const Camera = @import("../Camera.zig").FlyingCamera;
-const glGetProcAddress = @import("../../Engine.zig").glGetProcAddress;
+const glGetProcAddress = @import("../../core/Engine.zig").glGetProcAddress;
 
 pub const GenericMesh = @import("Mesh.zig").Mesh;
-pub const DefaultVertex = @import("Mesh.zig").DefaultVertex;
+pub const DefaultVertex = @import("Mesh.zig").DefaultVertexNormal;
 pub const Mesh = GenericMesh(DefaultVertex);
 pub const Cube = @import("Mesh.zig").cube;
 pub const Plane = @import("Mesh.zig").plane;
@@ -66,6 +66,7 @@ pub fn deinit(world: *World) !void {
 }
 
 pub fn prepareFrame(world: *World) !void {
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     var q = world.entities.query(.{
         .all = &.{
             .{ .graphic_context = &.{ .camera, .active } },

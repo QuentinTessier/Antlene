@@ -1,5 +1,6 @@
 const std = @import("std");
 const gl = @import("gl");
+const Math = @import("AntleneMath");
 
 pub const AttributeDescription = struct {
     size: usize,
@@ -18,6 +19,51 @@ pub const DefaultVertex = struct {
         .{ .size = 2, .type = gl.FLOAT, .normalized = false },
     };
 };
+
+pub const DefaultVertexNormal = struct {
+    position: @Vector(3, f32),
+    normal: @Vector(3, f32),
+    texCoords: @Vector(2, f32),
+    tangent: @Vector(3, f32),
+
+    const attributes = [_]AttributeDescription{
+        .{ .size = 3, .type = gl.FLOAT, .normalized = false },
+        .{ .size = 3, .type = gl.FLOAT, .normalized = false },
+        .{ .size = 2, .type = gl.FLOAT, .normalized = false },
+        .{ .size = 3, .type = gl.FLOAT, .normalized = false },
+    };
+};
+
+pub fn generateTangent(vertices: []DefaultVertexNormal, indices: []const u32) void {
+    var i: usize = 0;
+    while (i < indices.len) : (i += 3) {
+        const v0 = vertices[indices[i]];
+        const v1 = vertices[indices[i + 1]];
+        const v2 = vertices[indices[i + 2]];
+        const edge1 = v1.position - v0.position;
+        const edge2 = v2.position - v0.position;
+        const deltaUV1 = v1.texCoords - v0.texCoords;
+        const deltaUV2 = v2.texCoords - v0.texCoords;
+
+        const f = 1.0 / (deltaUV1[0] * deltaUV2[1] - deltaUV2[0] * deltaUV1[1]);
+        const tangent = Math.Vec3.normalize(@Vector(3, f32){
+            f * (deltaUV2[1] * edge1[0] - deltaUV1[1] * edge2[0]),
+            f * (deltaUV2[1] * edge1[1] - deltaUV1[1] * edge2[1]),
+            f * (deltaUV2[1] * edge1[2] - deltaUV1[1] * edge2[2]),
+        });
+
+        // For compleness
+        //const bitangent = @Vector(3, f32){
+        //    f * (-deltaUV2[0] * edge1[0] + deltaUV1[0] * edge2[0]),
+        //    f * (-deltaUV2[0] * edge1[1] + deltaUV1[0] * edge2[1]),
+        //    f * (-deltaUV2[0] * edge1[2] + deltaUV1[0] * edge2[2]),
+        //};
+
+        vertices[indices[i]].tangent = tangent;
+        vertices[indices[i + 1]].tangent = tangent;
+        vertices[indices[i + 2]].tangent = tangent;
+    }
+}
 
 pub fn Mesh(comptime VertexType: type) type {
     if (@typeInfo(VertexType) != .Struct) @panic("Must be struct");
@@ -111,11 +157,11 @@ const CubeIndices = [_]u32{
     6, 7, 3,
 };
 
-const PlaneVertices = [_]DefaultVertex{
-    .{ .position = .{ 1, 1, 0 }, .normal = .{ 0, 0, 1 }, .texCoords = .{ 1, 1 } },
-    .{ .position = .{ 1, -1, 0 }, .normal = .{ 0, 0, 1 }, .texCoords = .{ 1, 0 } },
-    .{ .position = .{ -1, -1, 0 }, .normal = .{ 0, 0, 1 }, .texCoords = .{ 0, 0 } },
-    .{ .position = .{ -1, 1, 0 }, .normal = .{ 0, 0, 1 }, .texCoords = .{ 0, 1 } },
+const PlaneVertices = [_]DefaultVertexNormal{
+    .{ .position = .{ 1, 1, 0 }, .normal = .{ 0, 0, 1 }, .texCoords = .{ 1, 1 }, .tangent = .{ 0, 0, 0 } },
+    .{ .position = .{ 1, -1, 0 }, .normal = .{ 0, 0, 1 }, .texCoords = .{ 1, 0 }, .tangent = .{ 0, 0, 0 } },
+    .{ .position = .{ -1, -1, 0 }, .normal = .{ 0, 0, 1 }, .texCoords = .{ 0, 0 }, .tangent = .{ 0, 0, 0 } },
+    .{ .position = .{ -1, 1, 0 }, .normal = .{ 0, 0, 1 }, .texCoords = .{ 0, 1 }, .tangent = .{ 0, 0, 0 } },
 };
 
 const PlaneIndices = [_]u32{
@@ -131,10 +177,12 @@ pub fn cube(allocator: std.mem.Allocator) !Mesh(DefaultVertex) {
     );
 }
 
-pub fn plane(allocator: std.mem.Allocator) !Mesh(DefaultVertex) {
-    return Mesh(DefaultVertex).init(
+pub fn plane(allocator: std.mem.Allocator) !Mesh(DefaultVertexNormal) {
+    const vertices = try allocator.dupe(DefaultVertexNormal, &PlaneVertices);
+    generateTangent(vertices, &PlaneIndices);
+    return Mesh(DefaultVertexNormal).init(
         allocator,
-        try allocator.dupe(DefaultVertex, &PlaneVertices),
+        vertices,
         try allocator.dupe(u32, &PlaneIndices),
     );
 }
