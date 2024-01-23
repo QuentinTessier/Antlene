@@ -1,9 +1,11 @@
 const std = @import("std");
 const ecs = @import("mach-ecs");
+const gl = @import("gl");
 const Math = @import("AntleneMath");
 const Context = @import("Context.zig").GraphicContext;
 const World = @import("../Engine.zig").World;
 const Mesh = @import("Context.zig").GraphicContext.Mesh;
+const Material = @import("gl/Material.zig");
 
 pub const name = .mesh_pipeline;
 const Module = World.Mod(@This());
@@ -14,7 +16,7 @@ pub const components = struct {
     pub const mesh_renderer = struct {
         pipeline: u8, // for future usage
     };
-    pub const material = u32; // Change for a struture
+    pub const material = Material; // Change for a struture
 };
 
 const MeshData = extern struct {
@@ -64,7 +66,7 @@ pub const local = struct {
         var q = world.entities.query(.{
             .all = &.{
                 .{ .graphic_context = &.{.mesh} },
-                .{ .mesh_pipeline = &.{.transform} },
+                .{ .mesh_pipeline = &.{ .transform, .material } },
             },
         });
         const program: Context.ShaderProgram.Program = renderer.state.program;
@@ -72,23 +74,24 @@ pub const local = struct {
         while (q.next()) |archetype| {
             const meshes: []Mesh = archetype.slice(.graphic_context, .mesh);
             const transform: []Math.mat4x4 = archetype.slice(.mesh_pipeline, .transform);
+            const materials: []Material = archetype.slice(.mesh_pipeline, .material);
 
             for (meshes, 0..) |mesh, index| {
-                internal_drawMesh(renderer, mesh, transform[index]);
+                internal_drawMesh(renderer, mesh, transform[index], materials[index]);
             }
         }
     }
 };
 
-fn internal_drawMesh(self: *Module, mesh: Mesh, transform: Math.mat4x4) void {
+fn internal_drawMesh(self: *Module, mesh: Mesh, transform: Math.mat4x4, material: Material) void {
     const meshData: MeshUniformBuffer = self.state.meshData;
 
     meshData.update(.{
-        .ambient = Math.Vec4.init(.{ .x = 1, .y = 0, .z = 1, .w = 1 }),
-        .shininess = Math.Vec4.splat(32.0),
+        .ambient = Math.Vec4.init(.{ .x = material.ambient[0], .y = material.ambient[1], .z = material.ambient[2], .w = 1 }),
+        .shininess = Math.Vec4.splat(material.shininess),
         .model = transform,
         .normal = transform, // TODO: Inverse
     });
-
+    gl.bindTextures(0, 2, @ptrCast(&.{ material.diffuse.handle, material.specular.handle }));
     mesh.draw();
 }

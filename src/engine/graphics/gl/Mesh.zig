@@ -26,15 +26,16 @@ pub fn Mesh(comptime VertexType: type) type {
     return struct {
         pub const Vertex = VertexType;
 
-        vertices: []const VertexType,
-        indices: []const u32,
+        allocator: std.mem.Allocator,
+        vertices: []VertexType,
+        indices: []u32,
 
         voa: u32 = 0,
         vob: u32 = 0,
         eob: u32 = 0,
 
-        pub fn init(vertices: []const VertexType, indices: []const u32) @This() {
-            var self: @This() = .{ .vertices = vertices, .indices = indices };
+        pub fn init(allocator: std.mem.Allocator, vertices: []VertexType, indices: []u32) @This() {
+            var self: @This() = .{ .allocator = allocator, .vertices = vertices, .indices = indices };
             gl.genVertexArrays(1, @ptrCast(&self.voa));
             gl.genBuffers(1, @ptrCast(&self.vob));
             gl.genBuffers(1, @ptrCast(&self.eob));
@@ -69,6 +70,8 @@ pub fn Mesh(comptime VertexType: type) type {
         }
 
         pub fn deinit(self: *@This()) void {
+            self.allocator.free(self.vertices);
+            self.allocator.free(self.indices);
             gl.deleteVertexArrays(1, @ptrCast(&self.voa));
             gl.deleteBuffers(1, @ptrCast(&self.vob));
             gl.deleteBuffers(1, @ptrCast(&self.eob));
@@ -109,10 +112,10 @@ const CubeIndices = [_]u32{
 };
 
 const PlaneVertices = [_]DefaultVertex{
-    .{ .position = .{ 1, 1, 0 }, .normal = .{ 0, 0, 1 }, .texCoords = .{ 0, 0 } },
-    .{ .position = .{ 1, -1, 0 }, .normal = .{ 0, 0, 1 }, .texCoords = .{ 0, 0 } },
+    .{ .position = .{ 1, 1, 0 }, .normal = .{ 0, 0, 1 }, .texCoords = .{ 1, 1 } },
+    .{ .position = .{ 1, -1, 0 }, .normal = .{ 0, 0, 1 }, .texCoords = .{ 1, 0 } },
     .{ .position = .{ -1, -1, 0 }, .normal = .{ 0, 0, 1 }, .texCoords = .{ 0, 0 } },
-    .{ .position = .{ -1, 1, 0 }, .normal = .{ 0, 0, 1 }, .texCoords = .{ 0, 0 } },
+    .{ .position = .{ -1, 1, 0 }, .normal = .{ 0, 0, 1 }, .texCoords = .{ 0, 1 } },
 };
 
 const PlaneIndices = [_]u32{
@@ -120,15 +123,23 @@ const PlaneIndices = [_]u32{
     1, 2, 3,
 };
 
-pub fn cube() Mesh(DefaultVertex) {
-    return Mesh(DefaultVertex).init(&CubeVertices, &CubeIndices);
+pub fn cube(allocator: std.mem.Allocator) !Mesh(DefaultVertex) {
+    return Mesh(DefaultVertex).init(
+        allocator,
+        try allocator.dupe(DefaultVertex, &CubeVertices),
+        try allocator.dupe(u32, &CubeIndices),
+    );
 }
 
-pub fn plane() Mesh(DefaultVertex) {
-    return Mesh(DefaultVertex).init(&PlaneVertices, &PlaneIndices);
+pub fn plane(allocator: std.mem.Allocator) !Mesh(DefaultVertex) {
+    return Mesh(DefaultVertex).init(
+        allocator,
+        try allocator.dupe(DefaultVertex, &PlaneVertices),
+        try allocator.dupe(u32, &PlaneIndices),
+    );
 }
 
-pub fn generateSphere(allocator: std.mem.Allocator, radius: f32, inLatitude: u32, inLongitude: u32) !struct { vertices: []DefaultVertex, indices: []u32 } {
+fn generateSphere(allocator: std.mem.Allocator, radius: f32, inLatitude: u32, inLongitude: u32) !struct { vertices: []DefaultVertex, indices: []u32 } {
     var vertices = std.ArrayList(DefaultVertex).init(allocator);
     const latitude = if (inLatitude < 2) 2 else inLatitude;
     const longitude = if (inLongitude < 3) 3 else inLongitude;
@@ -190,4 +201,9 @@ pub fn generateSphere(allocator: std.mem.Allocator, radius: f32, inLatitude: u32
         .vertices = try vertices.toOwnedSlice(),
         .indices = try indices.toOwnedSlice(),
     };
+}
+
+pub fn sphere(allocator: std.mem.Allocator, radius: f32, inLatitude: u32, inLongitude: u32) !Mesh(DefaultVertex) {
+    const data = try generateSphere(allocator, radius, inLatitude, inLongitude);
+    return Mesh(DefaultVertex).init(allocator, data.vertices, data.indices);
 }

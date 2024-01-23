@@ -10,6 +10,8 @@ pub const GenericMesh = @import("Mesh.zig").Mesh;
 pub const DefaultVertex = @import("Mesh.zig").DefaultVertex;
 pub const Mesh = GenericMesh(DefaultVertex);
 pub const Cube = @import("Mesh.zig").cube;
+pub const Plane = @import("Mesh.zig").plane;
+pub const Sphere = @import("Mesh.zig").sphere;
 
 pub const Texture = @import("Texture.zig");
 pub const ShaderProgram = @import("Shader.zig");
@@ -49,6 +51,17 @@ pub fn init(world: *World, context: *Module) !void {
 }
 
 pub fn deinit(world: *World) !void {
+    var q = world.entities.query(.{
+        .all = &.{
+            .{ .graphic_context = &.{.mesh} },
+        },
+    });
+    while (q.next()) |archetype| {
+        const meshes: []Mesh = archetype.slice(.graphic_context, .mesh);
+        for (meshes) |*mesh| {
+            mesh.deinit();
+        }
+    }
     world.mod.graphic_context.state.sceneData.deinit();
 }
 

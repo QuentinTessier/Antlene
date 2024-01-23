@@ -25,7 +25,7 @@ layout(binding = 1) uniform sampler2D specular;
 
 void main()
 {
-    vec3 lightPosition = vec3(0, 3, -2);
+    vec3 lightPosition = vec3(0, 3, 3);
     vec3 lightColor = vec3(1.0, 1.0, 1.0);
 
     vec3 sDiffuse = texture(diffuse, f_TexCoords).rgb;
@@ -42,5 +42,5 @@ void main()
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess.x);
     vec3 specular = lightColor * (spec * sSpecular);
 
-    r_Color = ambient;
+    r_Color = vec4(diffuse + specular + sAmbient, 1.0);
 }
