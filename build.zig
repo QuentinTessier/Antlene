@@ -1,6 +1,14 @@
 const std = @import("std");
 
-pub fn buildAntleneGame(b: *std.Build, name: []const u8, root_file: []const u8, target: std.Build.ResolvedTarget, optimize: std.builtin.Mode) *std.Build.Step.Compile {
+const zflecs = @import("./extern/zig-gamedev/libs/zflecs/build.zig");
+
+pub fn buildAntleneGame(
+    b: *std.Build,
+    name: []const u8,
+    root_file: []const u8,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.Mode,
+) *std.Build.Step.Compile {
     const exe = b.addExecutable(.{
         .name = name,
         .root_source_file = .{
@@ -10,11 +18,7 @@ pub fn buildAntleneGame(b: *std.Build, name: []const u8, root_file: []const u8, 
         .optimize = optimize,
     });
 
-    const opengl = b.createModule(.{
-        .root_source_file = .{
-            .path = "extern/gl/gl4_6.zig",
-        },
-    });
+    const flecs = zflecs.package(b, target, optimize, .{});
 
     const zigimg_dep = b.dependency("zigimg", .{});
     const zigimg = zigimg_dep.module("zigimg");
@@ -27,28 +31,26 @@ pub fn buildAntleneGame(b: *std.Build, name: []const u8, root_file: []const u8, 
     exe.root_module.addImport("mach-glfw", glfw);
     @import("mach_glfw").addPaths(exe);
 
-    const ecs_dep = b.dependency("mach_ecs", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    const ecs = ecs_dep.module("mach-ecs");
-
     const math_dep = b.dependency("AntleneMath", .{
         .target = target,
         .optimize = optimize,
     });
     const math = math_dep.module("AntleneMath");
 
+    const opengl_dep = b.dependency("AntleneOpenGL", .{});
+    const opengl = opengl_dep.module("AntleneOpenGL");
+
     const engine = b.createModule(.{
         .root_source_file = .{
             .path = "src/engine/Antlene.zig",
         },
     });
-    engine.addImport("gl", opengl);
     engine.addImport("mach-glfw", glfw);
     engine.addImport("zigimg", zigimg);
-    engine.addImport("mach-ecs", ecs);
     engine.addImport("AntleneMath", math);
+    engine.addImport("AntleneOpenGL", opengl);
+    engine.addImport("zflecs", flecs.zflecs);
+    flecs.link(exe);
 
     const game = b.createModule(.{
         .root_source_file = .{

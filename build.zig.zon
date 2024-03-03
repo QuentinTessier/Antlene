@@ -12,6 +12,10 @@
         "README.md",
     },
     .dependencies = .{
+        .AntleneOpenGL = .{
+            .url = "https://github.com/QuentinTessier/AntleneOpenGL/archive/refs/tags/v0.1.tar.gz",
+            .hash = "12202a4d2051d8d6c35ec063e4bcf2998b4f540138b4d02407fccbe02cd6d86ab666",
+        },
         .AntleneMath = .{
             .url = "https://github.com/QuentinTessier/AntleneMath/archive/c80cb57e6fd6275c2d5f70747885511935d25822.tar.gz",
             .hash = "1220d8f5a2e56d555f50c6c9c0e29ab09469b4312bba90e68ebaede147a2cc4d08f7",
@@ -20,13 +24,9 @@
             .url = "https://pkg.machengine.org/mach-glfw/8953217f28f5eb65ad7888504f108515cc33abfd.tar.gz",
             .hash = "122032ff418078c202b583daf950c5f186ad79d6d96ce7548b3e656ca36b009e11c3",
         },
-        .mach_ecs = .{
-            .url = "https://pkg.machengine.org/mach-ecs/83a3ed801008a976dd79e10068157b02c3b76a36.tar.gz",
-            .hash = "1220ed76b7395bfca9519ae58e7aa1c4ee94abc7e65b35a076f91d9c4ffa50de27e6",
-        },
         .zigimg = .{
-            .url = "https://github.com/zigimg/zigimg/archive/ad6ad042662856f55a4d67499f1c4606c9951031.tar.gz",
-            .hash = "1220bf6b616ca219f95be1205b12aa8cdb7e09838fcebeae90b48b5ab0a030c5ab45",
+            .url = "https://github.com/zigimg/zigimg/archive/84ed54a53d645591eaa38d0d8c14f515aef605e5.tar.gz",
+            .hash = "1220f973e776be54ca390a663d0c0f31c2929b05b6e1328d060d73ccb9c2f85f1831",
         },
     },
 }
