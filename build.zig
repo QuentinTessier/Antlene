@@ -1,7 +1,5 @@
 const std = @import("std");
 
-const zflecs = @import("./extern/zig-gamedev/libs/zflecs/build.zig");
-
 pub fn buildAntleneGame(
     b: *std.Build,
     name: []const u8,
@@ -18,24 +16,17 @@ pub fn buildAntleneGame(
         .optimize = optimize,
     });
 
-    const flecs = zflecs.package(b, target, optimize, .{});
-
     const zigimg_dep = b.dependency("zigimg", .{});
     const zigimg = zigimg_dep.module("zigimg");
-    // Use mach-glfw
-    const glfw_dep = b.dependency("mach_glfw", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    const glfw = glfw_dep.module("mach-glfw");
-    exe.root_module.addImport("mach-glfw", glfw);
-    @import("mach_glfw").addPaths(exe);
 
     const math_dep = b.dependency("AntleneMath", .{
         .target = target,
         .optimize = optimize,
     });
     const math = math_dep.module("AntleneMath");
+
+    const window_dep = b.dependency("AntleneWindowSystem", .{});
+    const window = window_dep.module("AntleneWindowSystem");
 
     const opengl_dep = b.dependency("AntleneOpenGL", .{});
     const opengl = opengl_dep.module("AntleneOpenGL");
@@ -45,19 +36,17 @@ pub fn buildAntleneGame(
             .path = "src/engine/Antlene.zig",
         },
     });
-    engine.addImport("mach-glfw", glfw);
     engine.addImport("zigimg", zigimg);
+    engine.addImport("AntleneWindowSystem", window);
     engine.addImport("AntleneMath", math);
     engine.addImport("AntleneOpenGL", opengl);
-    engine.addImport("zflecs", flecs.zflecs);
-    flecs.link(exe);
 
     const game = b.createModule(.{
         .root_source_file = .{
             .path = root_file,
         },
     });
-    game.addImport("Antlene", engine);
+    game.addImport("antlene", engine);
     exe.root_module.addImport("antlene", engine);
     exe.root_module.addImport("game", game);
     return exe;

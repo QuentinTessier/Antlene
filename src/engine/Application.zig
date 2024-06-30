@@ -1,44 +1,48 @@
 const std = @import("std");
-const glfw = @import("mach-glfw");
-const zflecs = @import("zflecs");
+const Window = @import("AntleneWindowSystem").PlatformWindow(Application);
 
 pub const Application = @This();
 
-window: glfw.Window,
-world: *zflecs.world_t,
+pub const ApplicationCreateInfo = struct {
+    name: [*:0]const u8,
+    width: i32,
+    height: i32,
+};
 
-pub fn init(allocator: std.mem.Allocator) !*Application {
+window: Window,
+isRunning: bool = true,
+
+pub fn init(allocator: std.mem.Allocator, createInfo: ApplicationCreateInfo) !*Application {
     const app = try allocator.create(Application);
     app.* = Application{
-        .window = glfw.Window.create(1280, 720, "Antlene Application", null, null, .{
-            .opengl_profile = .opengl_core_profile,
-            .context_version_major = 4,
-            .context_version_minor = 6,
-        }) orelse {
-            std.log.err("failed to create GLFW window: {?s}", .{glfw.getErrorString()});
-            return error.FailedToInitWindow;
-        },
-        .world = zflecs.init(),
+        .window = try Window.create(.{
+            .title = createInfo.name,
+            .extent = .{ .x = 0, .y = 0, .width = createInfo.width, .height = createInfo.height },
+            .context = .{ .OpenGL = .{ .major = 4, .minor = 6 } },
+        }, app),
     };
-    glfw.makeContextCurrent(app.window);
 
     return app;
 }
 
-pub fn deinit(self: *Application) void {
-    _ = zflecs.fini(self.world);
-    self.window.destroy();
-}
+pub fn deinit(_: *Application) void {}
 
 pub fn shouldClose(self: *Application) bool {
-    return self.window.shouldClose();
+    return !self.isRunning;
 }
 
 pub fn update(self: *Application) !void {
-    _ = self;
-    glfw.pollEvents();
+    self.window.pollEvents();
+}
+
+pub fn finishFrame(self: *Application) void {
+    self.window.swapBuffers();
 }
 
 pub fn draw(self: *Application) !void {
     _ = self;
+}
+
+pub fn onCloseEvent(self: *Application, _: *Window) void {
+    self.isRunning = false;
 }

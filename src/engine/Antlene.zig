@@ -1,49 +1,49 @@
 const std = @import("std");
-const glfw = @import("mach-glfw");
-const Graphics = @import("AntleneOpenGL");
 const zflecs = @import("zflecs");
+const Graphics = @import("AntleneOpenGL");
+
+const PlatfromWindow = @import("AntleneWindowSystem").PlatformWindow;
+const Window = PlatfromWindow(Application);
 
 pub const Application = @import("Application.zig");
 
+pub var Allocator: std.mem.Allocator = undefined;
+pub var ApplicationInstance: *Application = undefined;
+
 pub const AntleneLogger = std.log.scoped(.Antlene);
 
-fn glfwErrorCallback(error_code: glfw.ErrorCode, description: [:0]const u8) void {
-    AntleneLogger.err("glfw: {}: {s}\n", .{ error_code, description });
+fn loadProcAddr(_: void, name: [:0]const u8) ?Graphics.glFunctionPointer {
+    return Window.getProcAddr()(name);
 }
 
-fn loadProcAddresse(_: void, name: [:0]const u8) ?Graphics.glFunctionPointer {
-    return glfw.getProcAddress(name);
-}
-
-pub fn entry() !void {
+pub fn entry(applicationCreateInfo: Application.ApplicationCreateInfo) !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
 
     const allocator = gpa.allocator();
 
-    glfw.setErrorCallback(glfwErrorCallback);
-    if (!glfw.init(.{})) {
-        AntleneLogger.err("glfw: Failed to initialize: {?s}", .{glfw.getErrorString()});
-        std.process.exit(0);
-    }
-    errdefer glfw.terminate();
+    Allocator = allocator;
 
-    var application = try Application.init(allocator);
+    var application = try Application.init(allocator, applicationCreateInfo);
     errdefer {
         application.deinit();
         allocator.destroy(application);
     }
+    ApplicationInstance = application;
 
-    try Graphics.init(allocator, loadProcAddresse);
+    try Graphics.init(allocator, Window.glLoad);
     errdefer Graphics.deinit();
+    Graphics.gl.depthRange(1.0, 0.0);
+    Graphics.gl.clearColor(1.0, 0.0, 0.0, 1.0);
 
     while (!application.shouldClose()) {
         try application.update();
+        Graphics.gl.clear(Graphics.gl.COLOR_BUFFER_BIT);
+
+        application.finishFrame();
     }
 
+    Graphics.deinit();
     application.deinit();
     allocator.destroy(application);
-
-    Graphics.deinit();
-    glfw.terminate();
 }

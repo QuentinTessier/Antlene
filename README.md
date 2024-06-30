@@ -5,6 +5,5 @@ I'm trying to make most of the dependencies myself, some of them are currently u
 
 | Tech   | Repo                                                             |
 |--------|------------------------------------------------------------------|
-| ECS    | [link](https://github.com/QuentinTessier/AntleneEntitiesModules) |
 | OpenGL | [link](https://github.com/QuentinTessier/AntleneOpenGL)          |
 | Maths  | [link](https://github.com/QuentinTessier/AntleneMath)            |
