@@ -37,8 +37,10 @@ pub fn Bus(comptime T: type) type {
         }
 
         pub fn process(self: *@This()) void {
-            while (self.postponed.readItem()) |event| {
-                self.notify(event);
+            if (self.postponed.count > 0) {
+                while (self.postponed.readItem()) |event| {
+                    self.notify(event);
+                }
             }
         }
     };
@@ -104,11 +106,11 @@ pub fn EventBus(comptime EventTypes: []const type) type {
             @field(self.payload, field_name).notify(event);
         }
 
-        pub fn postpone(self: *@This(), event: anytype) void {
+        pub fn postpone(self: *@This(), event: anytype) !void {
             const field_name = comptime ZigUtils.GetDemangledTypeName(@TypeOf(event));
             if (!@hasField(PayloadType, field_name)) @panic("EventBus doesn't have a event with type name " ++ field_name);
 
-            try @field(self.payload, field_name).postpone(self.allocator, event);
+            try @field(self.payload, field_name).postpone(event);
         }
 
         pub fn process(self: *@This()) void {

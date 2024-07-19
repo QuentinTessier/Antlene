@@ -18,8 +18,9 @@
             //.hash = "12202a4d2051d8d6c35ec063e4bcf2998b4f540138b4d02407fccbe02cd6d86ab666",
         },
         .AntleneMath = .{
-            .url = "https://github.com/QuentinTessier/AntleneMath/archive/c80cb57e6fd6275c2d5f70747885511935d25822.tar.gz",
-            .hash = "1220d8f5a2e56d555f50c6c9c0e29ab09469b4312bba90e68ebaede147a2cc4d08f7",
+            .path = "../AntleneMath",
+            //.url = "https://github.com/QuentinTessier/AntleneMath/archive/c80cb57e6fd6275c2d5f70747885511935d25822.tar.gz",
+            //.hash = "1220d8f5a2e56d555f50c6c9c0e29ab09469b4312bba90e68ebaede147a2cc4d08f7",
         },
         .AntleneWindowSystem = .{
             .path = "../AntleneWindowSystem",
@@ -29,6 +30,19 @@
         .zigimg = .{
             .url = "https://github.com/zigimg/zigimg/archive/84ed54a53d645591eaa38d0d8c14f515aef605e5.tar.gz",
             .hash = "1220f973e776be54ca390a663d0c0f31c2929b05b6e1328d060d73ccb9c2f85f1831",
+        },
+        .zjobs = .{
+            .path = "./extern/zig-gamedev/libs/zjobs",
+        },
+        .zpool = .{
+            .path = "./extern/zig-gamedev/libs/zpool",
+        },
+        .zig_ecs = .{
+            .path = "./extern/zig-ecs",
+        },
+        .zigrc = .{
+            .url = "https://github.com/Aandreba/zigrc/archive/6d9c545c71ceb6d45775a3063885b7510f2399e6.tar.gz",
+            .hash = "1220aaafcca6b105c611f1cc94633033482f87cfec4bfbc3670e58f0a37d88334e85",
         },
     },
 }

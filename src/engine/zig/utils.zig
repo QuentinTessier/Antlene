@@ -9,3 +9,11 @@ pub fn GetDemangledTypeName(comptime T: type) [:0]const u8 {
         return name;
     }
 }
+
+pub fn FunctionCanReturnError(comptime Info: std.builtin.Type.Fn) bool {
+    if (Info.return_type) |rtype| {
+        return (@typeInfo(rtype) == .ErrorUnion);
+    } else {
+        return false;
+    }
+}

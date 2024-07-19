@@ -1,3 +1,6 @@
 [submodule "extern/zig-gamedev"]
 	path = extern/zig-gamedev
 	url = git@github.com:zig-gamedev/zig-gamedev.git
+[submodule "extern/zig-ecs"]
+	path = extern/zig-ecs
+	url = git@github.com:prime31/zig-ecs.git

@@ -16,6 +16,19 @@ pub fn buildAntleneGame(
         .optimize = optimize,
     });
 
+    // TODO: Cleanup import code
+    const zjobs_dep = b.dependency("zjobs", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const zjobs = zjobs_dep.module("zjobs");
+
+    const zpool_dep = b.dependency("zpool", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const zpool = zpool_dep.module("zpool");
+
     const zigimg_dep = b.dependency("zigimg", .{});
     const zigimg = zigimg_dep.module("zigimg");
 
@@ -31,15 +44,25 @@ pub fn buildAntleneGame(
     const opengl_dep = b.dependency("AntleneOpenGL", .{});
     const opengl = opengl_dep.module("AntleneOpenGL");
 
+    const ecs_dep = b.dependency("zig_ecs", .{ .target = target, .optimize = optimize });
+    const ecs = ecs_dep.module("zig-ecs");
+
+    const rc_dep = b.dependency("zigrc", .{});
+    const rc = &rc_dep.artifact("zig-rc").root_module;
+
     const engine = b.createModule(.{
         .root_source_file = .{
             .path = "src/engine/Antlene.zig",
         },
     });
     engine.addImport("zigimg", zigimg);
+    engine.addImport("zpool", zpool);
+    engine.addImport("zjobs", zjobs);
     engine.addImport("AntleneWindowSystem", window);
     engine.addImport("AntleneMath", math);
     engine.addImport("AntleneOpenGL", opengl);
+    engine.addImport("ecs", ecs);
+    engine.addImport("rc", rc);
 
     const game = b.createModule(.{
         .root_source_file = .{
@@ -47,7 +70,15 @@ pub fn buildAntleneGame(
         },
     });
     game.addImport("antlene", engine);
+    // TODO: This should only be imported in dev mode (zig language server can't make the link when these are only imported in the engine module).
+    exe.root_module.addImport("zigimg", zigimg);
+    exe.root_module.addImport("zpool", zpool);
     exe.root_module.addImport("antlene", engine);
+    exe.root_module.addImport("zjobs", zjobs);
+    exe.root_module.addImport("AntleneMath", math);
+    exe.root_module.addImport("AntleneWindowSystem", window);
+    exe.root_module.addImport("AntleneOpenGL", opengl);
+    exe.root_module.addImport("ecs", ecs);
     exe.root_module.addImport("game", game);
     return exe;
 }

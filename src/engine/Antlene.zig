@@ -1,20 +1,16 @@
 const std = @import("std");
-const zflecs = @import("zflecs");
+pub const ecs = @import("ecs");
 const Graphics = @import("AntleneOpenGL");
-
-const PlatfromWindow = @import("AntleneWindowSystem").PlatformWindow;
-const Window = PlatfromWindow(Application);
+const Window = @import("AntleneWindowSystem");
+const Math = @import("AntleneMath");
 
 pub const Application = @import("Application.zig");
+pub const EventBus = @import("core/EventBus.zig");
+pub const EnginePipeline = @import("core/Pipeline.zig");
 
-pub var Allocator: std.mem.Allocator = undefined;
-pub var ApplicationInstance: *Application = undefined;
+pub const Components = @import("./core/ecs/Components.zig");
 
-pub const AntleneLogger = std.log.scoped(.Antlene);
-
-fn loadProcAddr(_: void, name: [:0]const u8) ?Graphics.glFunctionPointer {
-    return Window.getProcAddr()(name);
-}
+pub const ECS = @import("./core/ecs/ecs.zig");
 
 pub fn entry(applicationCreateInfo: Application.ApplicationCreateInfo) !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -22,28 +18,32 @@ pub fn entry(applicationCreateInfo: Application.ApplicationCreateInfo) !void {
 
     const allocator = gpa.allocator();
 
-    Allocator = allocator;
+    try EventBus.init(allocator);
+    EnginePipeline.init(allocator);
 
     var application = try Application.init(allocator, applicationCreateInfo);
     errdefer {
-        application.deinit();
+        application.deinit() catch {};
         allocator.destroy(application);
     }
-    ApplicationInstance = application;
 
-    try Graphics.init(allocator, Window.glLoad);
-    errdefer Graphics.deinit();
-    Graphics.gl.depthRange(1.0, 0.0);
-    Graphics.gl.clearColor(1.0, 0.0, 0.0, 1.0);
+    try Graphics.init(allocator, struct {
+        pub fn loadFn(_: void, name: [:0]const u8) ?Graphics.glFunctionPointer {
+            return Window.getOpenGLProcAddr()(name);
+        }
+    }.loadFn);
 
     while (!application.shouldClose()) {
-        try application.update();
-        Graphics.gl.clear(Graphics.gl.COLOR_BUFFER_BIT);
-
-        application.finishFrame();
+        try application.onFrameStart();
+        try application.onPreFrameUpdate();
+        try application.onFrameUpdate();
+        try application.onFrameValidate();
+        try application.onFrameEnd();
     }
 
     Graphics.deinit();
-    application.deinit();
+    try application.deinit();
     allocator.destroy(application);
+    EnginePipeline.deinit();
+    EventBus.deinit(allocator);
 }
