@@ -46,6 +46,15 @@ pub fn removeTexture(self: *TextureRegistry, handle: TexturePool.Handle) !void {
     try self.texturePool.remove(handle);
 }
 
+fn flipPixel(img: *zimg.Image) void {
+    switch (img.pixels) {
+        .rgba32 => |pixels| std.mem.reverse(@TypeOf(pixels[0]), pixels),
+        .rgb24 => |pixels| std.mem.reverse(@TypeOf(pixels[0]), pixels),
+        .grayscale8 => |pixels| std.mem.reverse(@TypeOf(pixels[0]), pixels),
+        else => {},
+    }
+}
+
 pub fn loadTexture(self: *TextureRegistry, allocator: std.mem.Allocator, path: []const u8, mipmaps: ?u32) !TexturePool.Handle {
     var img = try zimg.Image.fromFilePath(allocator, path);
     defer img.deinit();

@@ -43,5 +43,5 @@ pub fn each(_: *ecs.Registry, _: ecs.Entity, components: Components, singletons:
     var renderer = singletons.renderer;
 
     const texture: ?Graphics.Texture = if (components.sprite.handle) |handle| texRegistry.texturePool.getColumnIfLive(handle, .texture) else null;
-    renderer.drawSprite(components.transform, components.sprite.region, texture, components.sprite.color);
+    renderer.drawIsometricSprite(components.transform, components.sprite.region, texture, components.sprite.color);
 }

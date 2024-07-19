@@ -52,6 +52,17 @@ pub const Renderer2D = struct {
             .vertexInputState = .{
                 .vertexAttributeDescription = &.{},
             },
+            .colorBlendState = .{
+                .attachments = &.{
+                    .{
+                        .blendEnable = true,
+                        .srcRgbFactor = .SrcAlpha,
+                        .dstRgbFactor = .OneMinusSrcAlpha,
+                        .srcAlphaFactor = .One,
+                        .dstAlphaFactor = .Zero,
+                    },
+                },
+            },
         });
 
         const vertexBuffer = Graphics.Resources.CreateTypedBuffer("Renderer2D_Vertices", Vertex, .{ .count = MaximunNumberOfVertices }, .{ .dynamic = true });
@@ -97,7 +108,13 @@ pub const Renderer2D = struct {
         const identity = Math.Mat4x4.identity();
         const sceneBuffer = Graphics.Resources.CreateTypedBuffer("Renderer2D_SceneData", Math.mat4x4, .{ .ptr = &[1]Math.mat4x4{identity} }, .{ .dynamic = true });
 
-        const defaultSampler = Graphics.Resources.CreateSampler(.{});
+        const defaultSampler = Graphics.Resources.CreateSampler(.{
+            .minFilter = .nearest,
+            .magFilter = .nearest,
+            .wrapR = .repeat,
+            .wrapS = .repeat,
+            .wrapT = .repeat,
+        });
         return .{
             .pipeline = pipeline,
             .vertexBuffer = vertexBuffer,
@@ -166,10 +183,10 @@ pub const Renderer2D = struct {
         }
 
         const textureCoords = [4]@Vector(2, f32){
-            .{ 0.0, 0.0 },
-            .{ 1.0, 0.0 },
-            .{ 1.0, 1.0 },
             .{ 0.0, 1.0 },
+            .{ 1.0, 1.0 },
+            .{ 1.0, 0.0 },
+            .{ 0.0, 0.0 },
         };
 
         const positions = [4]@Vector(4, f32){
@@ -188,7 +205,7 @@ pub const Renderer2D = struct {
 
         const textureIndex: f32 = blk: {
             if (texture) |sTexture| {
-                for (self.textures[1..self.currentTexture], 0..) |t, index| {
+                for (self.textures[1..self.currentTexture], 1..) |t, index| {
                     if (t.handle == sTexture.handle) {
                         break :blk @as(f32, @floatFromInt(index));
                     }
@@ -218,5 +235,21 @@ pub const Renderer2D = struct {
         }
         self.currentVertex += 4;
         self.currentIndex += 6;
+    }
+
+    pub fn drawIsometricSprite(self: *Renderer2D, transform: Transform, region: @Vector(4, f32), texture: ?Graphics.Texture, color: @Vector(4, f32)) void {
+        const isoMat = Math.Mat2x2.init(.{
+            .{ 32.0 * 0.5, -32.0 * 0.5 },
+            .{ 32.0 * 0.25, 32.0 * 0.25 },
+        });
+
+        const position = Math.Mat2x2.mulVec(isoMat, .{ transform.position[0], transform.position[1] });
+        const newTransform = Transform{
+            .position = .{ position[0], position[1], 0.0 },
+            .scale = transform.scale,
+            .rotation = transform.rotation,
+        };
+
+        self.drawSprite(newTransform, region, texture, color);
     }
 };
