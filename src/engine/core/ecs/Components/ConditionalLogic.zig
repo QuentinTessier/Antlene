@@ -6,5 +6,10 @@ const KeyState = @import("../Singletons/InputSingleton.zig").KeyState;
 pub const KeyEventLogic = struct {
     keycode: WindowEvents.KeyCode,
     state: KeyState,
-    logic: *const fn (*ecs.Registry) void,
+    logic: *const fn (*ecs.Registry, ecs.Entity) void,
+};
+
+pub const ActionLogic = struct {
+    actionName: []const u8,
+    logic: *const fn (*ecs.Registry, ecs.Entity) void,
 };

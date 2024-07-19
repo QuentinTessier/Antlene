@@ -3,6 +3,7 @@ const ecs = @import("ecs");
 const WindowEvents = @import("AntleneWindowSystem").Events;
 const Window = @import("AntleneWindowSystem");
 
+pub const Action = @import("../../Events/Action.zig");
 const Pipeline = @import("../../Pipeline.zig");
 
 pub const InputSingleton = @This();
@@ -17,9 +18,12 @@ pub const KeyState = enum(u8) {
 };
 
 keyboardState: std.EnumArray(WindowEvents.KeyCode, KeyState) = std.EnumArray(WindowEvents.KeyCode, KeyState).initFill(.Up),
+actions: std.StringArrayHashMap(Action),
 
-pub fn init(_: std.mem.Allocator) InputSingleton {
-    return .{};
+pub fn init(allocator: std.mem.Allocator) InputSingleton {
+    return .{
+        .actions = std.StringArrayHashMap(Action).init(allocator),
+    };
 }
 
 pub fn setup(_: *InputSingleton) !void {
@@ -29,7 +33,9 @@ pub fn setup(_: *InputSingleton) !void {
     });
 }
 
-pub fn deinit(_: *InputSingleton) void {}
+pub fn deinit(self: *InputSingleton) void {
+    self.actions.deinit();
+}
 
 pub fn OnFrameStart(registry: *ecs.Registry) !void {
     var self = registry.singletons().get(InputSingleton);
@@ -44,6 +50,10 @@ pub fn OnFrameStart(registry: *ecs.Registry) !void {
             .Released => if (!isDown) .Up else .Pressed,
         };
         self.keyboardState.set(key, newValue);
+    }
+
+    for (self.actions.values()) |*action| {
+        action.update(self);
     }
 }
 
@@ -66,4 +76,8 @@ pub fn isKeyUp(self: *const InputSingleton, keycode: WindowEvents.KeyCode) bool 
 
 pub fn isKeyDown(self: *const InputSingleton, keycode: WindowEvents.KeyCode) bool {
     return self.isKey(.Down, keycode);
+}
+
+pub fn createAction(self: *InputSingleton, name: []const u8, action: Action) !void {
+    try self.actions.put(name, action);
 }

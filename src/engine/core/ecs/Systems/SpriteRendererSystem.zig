@@ -10,6 +10,8 @@ const EcsComponents = @import("../Components.zig");
 
 pub const SpriteRendererSystemDescription = @This();
 
+pub const Name = "SpriteRendererSystem";
+
 pub const Includes = .{
     EcsComponents.Transform,
     EcsComponents.Sprite,

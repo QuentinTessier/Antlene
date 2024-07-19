@@ -3,7 +3,6 @@ const ecs = @import("ecs");
 const Graphics = @import("AntleneOpenGL");
 const Pipeline = @import("../../Pipeline.zig");
 
-const TextureRegistry = @import("../Singletons/TextureRegistry.zig");
 const RendererFrontEnd = @import("../../RendererFrontend.zig");
 
 const EcsComponents = @import("../Components.zig");
@@ -12,6 +11,8 @@ const Application = @import("../../../Application.zig");
 // TODO: Have a better way to query screen size without getting a pointer to the whole Application
 // TODO: Have the system check if the screen size changed
 pub const CameraUpdateSystemDescription = @This();
+
+pub const Name = "CameraUpdateSystem";
 
 pub const Includes = .{
     EcsComponents.Camera,

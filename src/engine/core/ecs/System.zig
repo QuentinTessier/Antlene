@@ -3,6 +3,7 @@ const ecs = @import("ecs");
 const Pipeline = @import("../Pipeline.zig");
 
 pub const KeyEventLogicSystemDescription = @import("./Systems/KeyEventLogicSystem.zig");
+pub const ActionLogicSystemDescription = @import("./Systems/ActionLogicSystem.zig");
 pub const CameraUpdateSystemDescription = @import("./Systems/CameraUpdateSystem.zig");
 pub const SpriteRendererSystemDescription = @import("./Systems/SpriteRendererSystem.zig");
 
@@ -64,6 +65,7 @@ fn GatherComponentsBasicView(comptime ComponentCollection: type, view: anytype, 
 
 pub fn MakeSystem(comptime Description: type) type {
     return struct {
+        pub const Name = Description.Name;
         pub const PipelineStep: Pipeline.PipelineStep = Description.PipelineStep;
         pub const Priority: i32 = Description.Priority;
 

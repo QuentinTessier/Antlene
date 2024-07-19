@@ -3,17 +3,17 @@ const ecs = @import("ecs");
 const Pipeline = @import("../../Pipeline.zig");
 const InputSingleton = @import("../Singletons/InputSingleton.zig");
 
-const KeyEventLogic = @import("../Components/ConditionalLogic.zig").KeyEventLogic;
+const ActionLogic = @import("../Components/ConditionalLogic.zig").ActionLogic;
 
-pub const KeyEventLogicSystemDescription = @This();
+pub const ActionLogicSystemDescription = @This();
 
-pub const Name = "KeyEventLogicSystem";
+pub const Name = "ActionLogicSystem";
 
-pub const Includes = .{KeyEventLogic};
+pub const Includes = .{ActionLogic};
 pub const Excludes = .{};
 
 pub const Components = struct {
-    logic: KeyEventLogic,
+    logic: ActionLogic,
 };
 
 pub const Singletons = struct {
@@ -26,7 +26,9 @@ pub const Priority: i32 = 0;
 pub fn each(registry: *ecs.Registry, e: ecs.Entity, comps: Components, singletons: Singletons) !void {
     const inputSingleton = singletons.inputSingleton;
 
-    if (inputSingleton.isKey(comps.logic.state, comps.logic.keycode)) {
-        comps.logic.logic(registry, e);
+    if (inputSingleton.actions.get(comps.logic.actionName)) |action| {
+        if (action.result) {
+            comps.logic.logic(registry, e);
+        }
     }
 }
