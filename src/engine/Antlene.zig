@@ -32,6 +32,9 @@ pub fn entry(applicationCreateInfo: Application.ApplicationCreateInfo) !void {
             return Window.getOpenGLProcAddr()(name);
         }
     }.loadFn);
+    Graphics.resizeFramebuffer(application.window.extent.width, application.window.extent.height);
+
+    try application.lateSetup();
 
     while (!application.shouldClose()) {
         try application.onFrameStart();

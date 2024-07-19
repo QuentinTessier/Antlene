@@ -1,8 +1,10 @@
 const std = @import("std");
 const Graphics = @import("AntleneOpenGL");
 const Math = @import("AntleneMath");
+const ECS = @import("./ecs/ecs.zig");
 
-const Sprite = @import("Graphics/Sprite.zig");
+const Sprite = ECS.Components.Sprite;
+const Transform = ECS.Components.Transform;
 
 pub const Renderer = @This();
 
@@ -23,6 +25,7 @@ pub const Renderer2D = struct {
     pipeline: Graphics.GraphicPipeline,
     vertexBuffer: Graphics.Buffer,
     indexBuffer: Graphics.Buffer,
+    sceneUniformBuffer: Graphics.Buffer,
 
     vertices: []Vertex,
     currentVertex: usize = 0,
@@ -31,6 +34,8 @@ pub const Renderer2D = struct {
     whiteTexture: Graphics.Texture = undefined,
     textures: [16]Graphics.Texture = undefined,
     currentTexture: usize = 1,
+
+    defaultSampler: Graphics.Sampler,
 
     isFirstPassForFrame: bool = true,
 
@@ -89,12 +94,18 @@ pub const Renderer2D = struct {
         Graphics.gl.uniform1iv(loc, 16, (&textures).ptr);
         Graphics.gl.useProgram(0);
 
+        const identity = Math.Mat4x4.identity();
+        const sceneBuffer = Graphics.Resources.CreateTypedBuffer("Renderer2D_SceneData", Math.mat4x4, .{ .ptr = &[1]Math.mat4x4{identity} }, .{ .dynamic = true });
+
+        const defaultSampler = Graphics.Resources.CreateSampler(.{});
         return .{
             .pipeline = pipeline,
             .vertexBuffer = vertexBuffer,
             .indexBuffer = indexBuffer,
+            .sceneUniformBuffer = sceneBuffer,
             .vertices = vertices,
             .whiteTexture = whiteTexture,
+            .defaultSampler = defaultSampler,
             .textures = [1]Graphics.Texture{whiteTexture} ++ [1]Graphics.Texture{undefined} ** 15,
         };
     }
@@ -105,6 +116,10 @@ pub const Renderer2D = struct {
         self.whiteTexture.deinit();
         self.pipeline.deinit(allocator);
         allocator.free(self.vertices);
+    }
+
+    pub fn updateSceneCamera(self: *Renderer2D, vp: Math.mat4x4) void {
+        self.sceneUniformBuffer.updateData(std.mem.asBytes(&vp), 0);
     }
 
     pub fn begin(self: *Renderer2D) void {
@@ -120,8 +135,9 @@ pub const Renderer2D = struct {
 
     pub fn execute(self: *const Renderer2D) !void {
         Graphics.Commands.BindGraphicPipeline(self.pipeline);
+        Graphics.Commands.BindUniformBuffer(0, self.sceneUniformBuffer, .whole, .{});
         for (self.textures[0..self.currentTexture], 0..) |texture, index| {
-            Graphics.Commands.BindTexture(@intCast(index), texture);
+            Graphics.Commands.BindSampledTexture(@intCast(index), texture, self.defaultSampler);
         }
         Graphics.Commands.BindIndexBuffer(self.indexBuffer, .u32);
         Graphics.Commands.BindStorageBuffer(1, self.vertexBuffer, .whole, .{});
@@ -132,7 +148,7 @@ pub const Renderer2D = struct {
         self.vertexBuffer.updateData(std.mem.sliceAsBytes(self.vertices[0..self.currentVertex]), 0);
         Graphics.Rendering.toSwapchain(
             .{
-                .colorLoadOp = .keep, //if (self.isFirstPassForFrame) .clear else .keep,
+                .colorLoadOp = if (self.isFirstPassForFrame) .clear else .keep,
                 .viewport = .{},
             },
             self,
@@ -141,7 +157,7 @@ pub const Renderer2D = struct {
         };
     }
 
-    pub fn drawSprite(self: *Renderer2D, sprite: Sprite) void {
+    pub fn drawSprite(self: *Renderer2D, transform: Transform, region: @Vector(4, f32), texture: ?Graphics.Texture, color: @Vector(4, f32)) void {
         if (self.currentVertex >= MaximunNumberOfVertices) {
             self.flush();
             self.currentIndex = 0;
@@ -171,9 +187,9 @@ pub const Renderer2D = struct {
         }
 
         const textureIndex: f32 = blk: {
-            if (sprite.texture) |sTexture| {
-                for (self.textures[1..self.currentTexture], 0..) |texture, index| {
-                    if (texture.handle == sTexture.handle) {
+            if (texture) |sTexture| {
+                for (self.textures[1..self.currentTexture], 0..) |t, index| {
+                    if (t.handle == sTexture.handle) {
                         break :blk @as(f32, @floatFromInt(index));
                     }
                 }
@@ -187,15 +203,15 @@ pub const Renderer2D = struct {
         };
 
         for (self.vertices[self.currentVertex .. self.currentVertex + 4], 0..) |*vertex, index| {
-            const model = sprite.getTransform();
+            const model = transform.getMatrix();
             const position = Math.Mat4x4.mulVec(model, .{ positions[index][0], positions[index][1], 0.0, 1.0 });
-            const uvOffset: @Vector(2, f32) = .{ sprite.region[0], sprite.region[1] };
-            const uvScale: @Vector(2, f32) = .{ sprite.region[2], sprite.region[3] };
+            const uvOffset: @Vector(2, f32) = .{ region[0], region[1] };
+            const uvScale: @Vector(2, f32) = .{ region[2], region[3] };
 
             vertex.* = Vertex{
                 .position = .{ position[0], position[1] },
                 .texCoords = textureCoords[index] * uvScale + uvOffset,
-                .color = sprite.color,
+                .color = color,
                 .tilingFactor = 1.0,
                 .texIndex = textureIndex,
             };

@@ -7,6 +7,8 @@ const Pipeline = @import("./core/Pipeline.zig");
 
 const EventBus = @import("core/EventBus.zig");
 
+const Renderer2D = @import("./core/RendererFrontend.zig").Renderer2D;
+
 pub const Application = @This();
 
 pub const ApplicationCreateInfo = struct {
@@ -40,13 +42,26 @@ pub fn init(allocator: std.mem.Allocator, createInfo: ApplicationCreateInfo) !*A
     app.registry.singletons().add(app);
     try Singletons.registerDefaultSingletons(&app.registry, app.allocator);
     try System.registerSystem(System.MakeSystem(System.KeyEventLogicSystemDescription));
+    try System.registerSystem(System.MakeSystem(System.CameraUpdateSystemDescription));
 
     try createInfo.initialize(app);
 
     return app;
 }
 
+pub fn lateSetup(self: *Application) !void {
+    const renderer = try Renderer2D.init(self.allocator);
+
+    self.registry.singletons().add(renderer);
+    try System.registerSystem(System.MakeSystem(System.SpriteRendererSystemDescription));
+}
+
 pub fn deinit(self: *Application) !void {
+    Singletons.deinitDefaultSingletons(&self.registry, self.allocator);
+
+    var renderer = self.registry.singletons().get(Renderer2D);
+    renderer.deinit(self.allocator);
+
     self.registry.deinit();
 }
 
@@ -93,4 +108,6 @@ pub fn onKeyEvent(_: *Application, _: *Window, e: Events.KeyEvent) void {
     };
 }
 
-pub fn onWindowResizeEvent(_: *Application, _: *Window, _: Events.ResizeEvent) void {}
+pub fn onWindowResizeEvent(_: *Application, _: *Window, e: Events.ResizeEvent) void {
+    Graphics.resizeFramebuffer(e.new.width, e.new.height);
+}

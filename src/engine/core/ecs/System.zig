@@ -3,6 +3,8 @@ const ecs = @import("ecs");
 const Pipeline = @import("../Pipeline.zig");
 
 pub const KeyEventLogicSystemDescription = @import("./Systems/KeyEventLogicSystem.zig");
+pub const CameraUpdateSystemDescription = @import("./Systems/CameraUpdateSystem.zig");
+pub const SpriteRendererSystemDescription = @import("./Systems/SpriteRendererSystem.zig");
 
 fn GatherSingletons(comptime SingletonCollection: type, registry: *ecs.Registry) SingletonCollection {
     if (SingletonCollection == void) {
@@ -70,12 +72,20 @@ pub fn MakeSystem(comptime Description: type) type {
             var ite = view.entityIterator();
             const singletons = GatherSingletons(Description.Singletons, registry);
             const isBasicView = Description.Includes.len == 1 and Description.Excludes.len == 0;
+            if (@hasDecl(Description, "begin")) {
+                Description.begin(registry, singletons);
+            }
+
             while (ite.next()) |entity| {
                 const components: Description.Components = switch (isBasicView) {
                     true => GatherComponentsBasicView(Description.Components, &view, entity),
                     false => GatherComponentsMultiView(Description.Components, &view, entity),
                 };
                 try @call(.auto, Description.each, .{ registry, entity, components, singletons });
+            }
+
+            if (@hasDecl(Description, "end")) {
+                Description.end(registry, singletons);
             }
         }
     };

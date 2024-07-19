@@ -30,3 +30,11 @@ pub fn registerDefaultSingletons(registry: *ecs.Registry, allocator: std.mem.All
         try actualS.setup();
     }
 }
+
+pub fn deinitDefaultSingletons(registry: *ecs.Registry, _: std.mem.Allocator) void {
+    var singletons = registry.singletons();
+    inline for (DefaultSingletons) |T| {
+        var s = singletons.get(T);
+        s.deinit();
+    }
+}

@@ -28,8 +28,8 @@
             //.hash = "122026e05b7c57c3aabb994fc32cd1f0f8c9ec12f6d46701b1b0818f0feb2da94c7c",
         },
         .zigimg = .{
-            .url = "https://github.com/zigimg/zigimg/archive/84ed54a53d645591eaa38d0d8c14f515aef605e5.tar.gz",
-            .hash = "1220f973e776be54ca390a663d0c0f31c2929b05b6e1328d060d73ccb9c2f85f1831",
+            .url = "https://github.com/zigimg/zigimg/archive/d9dbbe22b5f7b5f1f4772169ed93ffeed8e8124d.tar.gz",
+            .hash = "122013646f7038ecc71ddf8a0d7de346d29a6ec40140af57f838b0a975c69af512b0",
         },
         .zjobs = .{
             .path = "./extern/zig-gamedev/libs/zjobs",

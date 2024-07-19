@@ -13,6 +13,7 @@ const TextureStorageColumn = struct {
 };
 
 const TexturePool = zpool.Pool(16, 16, Graphics.Texture, TextureStorageColumn);
+pub const TextureHandle = TexturePool.Handle;
 
 texturePool: TexturePool,
 
@@ -46,12 +47,23 @@ pub fn removeTexture(self: *TextureRegistry, handle: TexturePool.Handle) !void {
 }
 
 pub fn loadTexture(self: *TextureRegistry, allocator: std.mem.Allocator, path: []const u8, mipmaps: ?u32) !TexturePool.Handle {
-    const img = try zimg.Image.fromFilePath(allocator, path);
+    var img = try zimg.Image.fromFilePath(allocator, path);
+    defer img.deinit();
 
     const format: Graphics.Texture.Format = switch (img.pixelFormat()) {
         .rgba32 => .rgba8,
-        .rgb24 => .rgb8,
+        .rgb24 => .rgb8_snorm,
         .grayscale8 => .r8,
+        else => return error.UnsupportedType,
+    };
+
+    const info: struct {
+        dataType: Graphics.Texture.DataType,
+        internalFormat: Graphics.Texture.TextureInternalFormat,
+    } = switch (img.pixelFormat()) {
+        .rgba32 => .{ .dataType = .u8, .internalFormat = .rgba },
+        .rgb24 => .{ .dataType = .u8, .internalFormat = .rgb },
+        .grayscale8 => .{ .dataType = .u8, .internalFormat = .r },
         else => return error.UnsupportedType,
     };
 
@@ -61,6 +73,12 @@ pub fn loadTexture(self: *TextureRegistry, allocator: std.mem.Allocator, path: [
         .format = format,
         .type = ._2D,
         .mipLevels = if (mipmaps) |m| m else 1,
+    });
+    texture.update(.{
+        .extent = .{ .width = @intCast(img.width), .height = @intCast(img.height), .depth = 0 },
+        .format = info.internalFormat,
+        .type = info.dataType,
+        .data = img.pixels.asConstBytes(),
     });
 
     return self.addTexture(path, texture);
