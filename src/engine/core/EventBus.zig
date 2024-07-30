@@ -1,19 +1,20 @@
 const std = @import("std");
 const EventBusGeneric = @import("Events/EventBus.zig").EventBus;
 const Events = @import("AntleneWindowSystem").Events;
+const Memory = @import("Memory.zig");
 
 const TEventBus = EventBusGeneric(&.{Events.KeyEvent});
 
 pub var _eventBus: *TEventBus = undefined;
 
-pub fn init(allocator: std.mem.Allocator) !void {
-    _eventBus = try allocator.create(TEventBus);
-    _eventBus.* = TEventBus.init(allocator);
+pub fn init() !void {
+    _eventBus = try Memory.Allocator.create(TEventBus);
+    _eventBus.* = TEventBus.init(Memory.Allocator);
 }
 
-pub fn deinit(allocator: std.mem.Allocator) void {
+pub fn deinit() void {
     _eventBus.deinit();
-    allocator.destroy(_eventBus);
+    Memory.Allocator.destroy(_eventBus);
 }
 
 pub inline fn listen(comptime T: type, obj: anytype, callback: anytype) !void {

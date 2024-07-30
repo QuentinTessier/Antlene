@@ -22,22 +22,21 @@ pub const Includes = .{
 pub const Excludes = .{};
 
 pub const Components = struct {
-    camera: EcsComponents.Camera,
+    camera: *EcsComponents.Camera,
 };
 
 pub const Singletons = struct {
     application: **Application,
-    renderer: *RendererFrontEnd.Renderer2D,
 };
 
 pub const PipelineStep: Pipeline.PipelineStep = .OnFrameValidate;
 pub const Priority: i32 = 0;
 
 pub fn each(_: *ecs.Registry, _: ecs.Entity, components: Components, singletons: Singletons) !void {
-    const cameraMatrix = components.camera.getProjectionMatrix(
+    const cameraMatrix = components.camera.getViewProjection(
         @floatFromInt(singletons.application.*.window.extent.width),
         @floatFromInt(singletons.application.*.window.extent.height),
     );
 
-    singletons.renderer.updateSceneCamera(cameraMatrix);
+    RendererFrontEnd.updateSceneCamera(cameraMatrix);
 }

@@ -1,5 +1,6 @@
 #version 460 core
 
+out vec3 f_WorldPosition;
 out vec2 f_TexCoord;
 out vec4 f_Color;
 out float f_TilingFactor;
@@ -63,6 +64,6 @@ void main() {
     f_TilingFactor = getTilingFactor(gl_VertexID);
     f_TexIndex = getTextureIndex(gl_VertexID);
 
-    vec4 pos = projectionMatrix * vec4(getPosition(gl_VertexID), 0.0, 1.0);
+    vec4 pos = projectionMatrix * vec4(getPosition(gl_VertexID), 1.0, 1.0);
     gl_Position = vec4(pos.xyz, 1.0);
 }

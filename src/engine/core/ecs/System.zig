@@ -6,6 +6,8 @@ pub const KeyEventLogicSystemDescription = @import("./Systems/KeyEventLogicSyste
 pub const ActionLogicSystemDescription = @import("./Systems/ActionLogicSystem.zig");
 pub const CameraUpdateSystemDescription = @import("./Systems/CameraUpdateSystem.zig");
 pub const SpriteRendererSystemDescription = @import("./Systems/SpriteRendererSystem.zig");
+pub const ChunkRendererSystemDescription = @import("./Systems/ChunkRendererSystem.zig");
+pub const ChunkReleaseSystemDescription = @import("./Systems/ChunkReleaseSystem.zig");
 
 fn GatherSingletons(comptime SingletonCollection: type, registry: *ecs.Registry) SingletonCollection {
     if (SingletonCollection == void) {
@@ -82,6 +84,36 @@ pub fn MakeSystem(comptime Description: type) type {
                 const components: Description.Components = switch (isBasicView) {
                     true => GatherComponentsBasicView(Description.Components, &view, entity),
                     false => GatherComponentsMultiView(Description.Components, &view, entity),
+                };
+                try @call(.auto, Description.each, .{ registry, entity, components, singletons });
+            }
+
+            if (@hasDecl(Description, "end")) {
+                Description.end(registry, singletons);
+            }
+        }
+    };
+}
+
+pub fn MakeCachedSystem(comptime Description: type) type {
+    return struct {
+        pub const Name = Description.Name;
+        pub const PipelineStep: Pipeline.PipelineStep = Description.PipelineStep;
+        pub const Priority: i32 = Description.Priority;
+
+        pub fn execute(registry: *ecs.Registry) !void {
+            var group = registry.group(Description.Includes, .{}, Description.Excludes);
+            var ite = group.entityIterator();
+            const singletons = GatherSingletons(Description.Singletons, registry);
+            const isBasicView = Description.Includes.len == 1 and Description.Excludes.len == 0;
+            if (@hasDecl(Description, "begin")) {
+                Description.begin(registry, singletons);
+            }
+
+            while (ite.next()) |entity| {
+                const components: Description.Components = switch (isBasicView) {
+                    true => GatherComponentsBasicView(Description.Components, &group, entity),
+                    false => GatherComponentsMultiView(Description.Components, &group, entity),
                 };
                 try @call(.auto, Description.each, .{ registry, entity, components, singletons });
             }

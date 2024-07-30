@@ -3,6 +3,7 @@ const ecs = @import("ecs");
 const zpool = @import("zpool");
 const zimg = @import("zigimg");
 const Graphics = @import("AntleneOpenGL");
+const rc = @import("rc");
 
 pub const TextureRegistry = @This();
 
@@ -55,6 +56,7 @@ fn flipPixel(img: *zimg.Image) void {
     }
 }
 
+// TODO: Flip image on the Y axis
 pub fn loadTexture(self: *TextureRegistry, allocator: std.mem.Allocator, path: []const u8, mipmaps: ?u32) !TexturePool.Handle {
     var img = try zimg.Image.fromFilePath(allocator, path);
     defer img.deinit();

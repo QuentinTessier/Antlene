@@ -1,6 +1,8 @@
 const std = @import("std");
 const ecs = @import("ecs");
 
+const Memory = @import("Memory.zig");
+
 const PriorityList = @import("../zig/PriorityList.zig").PriorityList(StepExec, .{ .field = .prio, .lessThan = struct {
     pub fn inlineFn(a: StepExec, b: StepExec) bool {
         return a.prio < b.prio;
@@ -13,6 +15,8 @@ pub const PipelineStep = enum(u32) {
     OnFrameUpdate, // Update module
     OnFrameValidate, // Prepare for rendering (build rendering tasks)
     OnFrameEnd, // Store data & clean frame info
+
+    ReleaseResources,
 };
 
 pub const PipelineInfo = struct {
@@ -24,24 +28,21 @@ pub const StepExec = struct {
     callback: *const fn (*ecs.Registry) anyerror!void,
 };
 
-var _allocator: std.mem.Allocator = undefined;
 var _steps: std.EnumArray(PipelineStep, std.ArrayListUnmanaged(StepExec)) = std.EnumArray(PipelineStep, std.ArrayListUnmanaged(StepExec)).initFill(.{});
 
-pub fn init(allocator: std.mem.Allocator) void {
-    _allocator = allocator;
-}
+pub fn init() void {}
 
 pub fn deinit() void {
     var ite = _steps.iterator();
     while (ite.next()) |entry| {
-        entry.value.deinit(_allocator);
+        entry.value.deinit(Memory.Allocator);
     }
 }
 
 pub fn register(step: PipelineStep, e: StepExec) std.mem.Allocator.Error!void {
     const s = _steps.getPtr(step);
     const index = PriorityList.findIndex(s.items, e);
-    try s.insert(_allocator, index, e);
+    try s.insert(Memory.Allocator, index, e);
 }
 
 pub fn unregister(step: PipelineStep, e: StepExec) void {

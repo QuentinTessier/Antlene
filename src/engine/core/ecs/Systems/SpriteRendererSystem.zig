@@ -24,26 +24,25 @@ pub const Components = struct {
     sprite: EcsComponents.Sprite,
 };
 
-pub const Singletons = struct {
-    textureRegistry: *TextureRegistry,
-    renderer: *RendererFrontEnd.Renderer2D,
-};
+pub const Singletons = void;
 
 pub const PipelineStep: Pipeline.PipelineStep = .OnFrameValidate;
 pub const Priority: i32 = 100;
 
-pub fn begin(_: *ecs.Registry, singletons: Singletons) void {
-    singletons.renderer.begin();
+pub fn begin(_: *ecs.Registry, _: Singletons) void {
+    RendererFrontEnd.isometricRenderer.firstPass = true;
 }
 
-pub fn end(_: *ecs.Registry, singletons: Singletons) void {
-    singletons.renderer.end();
+pub fn end(_: *ecs.Registry, _: Singletons) void {
+    RendererFrontEnd.isometricRenderer.batch() catch {};
+    RendererFrontEnd.isometricRenderer.flush();
+    RendererFrontEnd.isometricRenderer.firstPass = false;
 }
 
-pub fn each(_: *ecs.Registry, _: ecs.Entity, components: Components, singletons: Singletons) !void {
-    const texRegistry = singletons.textureRegistry;
-    var renderer = singletons.renderer;
-
-    const texture: ?Graphics.Texture = if (components.sprite.handle) |handle| texRegistry.texturePool.getColumnIfLive(handle, .texture) else null;
-    renderer.drawIsometricSprite(components.transform, components.sprite.region, texture, components.sprite.color);
+pub fn each(_: *ecs.Registry, _: ecs.Entity, components: Components, _: Singletons) !void {
+    if (!RendererFrontEnd.isometricRenderer.drawSprite(components.transform, components.sprite.region)) {
+        try RendererFrontEnd.isometricRenderer.batch();
+        RendererFrontEnd.isometricRenderer.flush();
+        _ = RendererFrontEnd.isometricRenderer.drawSprite(components.transform, components.sprite.region);
+    }
 }

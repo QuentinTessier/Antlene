@@ -37,6 +37,9 @@
         .zpool = .{
             .path = "./extern/zig-gamedev/libs/zpool",
         },
+        .znoise = .{
+            .path = "./extern/zig-gamedev/libs/znoise",
+        },
         .zig_ecs = .{
             .path = "./extern/zig-ecs",
         },

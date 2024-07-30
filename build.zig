@@ -29,6 +29,12 @@ pub fn buildAntleneGame(
     });
     const zpool = zpool_dep.module("zpool");
 
+    const znoise_dep = b.dependency("znoise", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const znoise = znoise_dep.module("znoise");
+
     const zigimg_dep = b.dependency("zigimg", .{});
     const zigimg = zigimg_dep.module("zigimg");
 
@@ -55,6 +61,7 @@ pub fn buildAntleneGame(
             .path = "src/engine/Antlene.zig",
         },
     });
+    engine.addImport("znoise", znoise);
     engine.addImport("zigimg", zigimg);
     engine.addImport("zpool", zpool);
     engine.addImport("zjobs", zjobs);
@@ -64,13 +71,14 @@ pub fn buildAntleneGame(
     engine.addImport("ecs", ecs);
     engine.addImport("rc", rc);
 
-    const game = b.createModule(.{
+    const game = b.addModule("game", .{
         .root_source_file = .{
             .path = root_file,
         },
     });
     game.addImport("antlene", engine);
     // TODO: This should only be imported in dev mode (zig language server can't make the link when these are only imported in the engine module).
+    exe.root_module.addImport("rc", rc);
     exe.root_module.addImport("zigimg", zigimg);
     exe.root_module.addImport("zpool", zpool);
     exe.root_module.addImport("antlene", engine);
@@ -80,6 +88,7 @@ pub fn buildAntleneGame(
     exe.root_module.addImport("AntleneOpenGL", opengl);
     exe.root_module.addImport("ecs", ecs);
     exe.root_module.addImport("game", game);
+    exe.root_module.addImport("znoise", znoise);
     return exe;
 }
 

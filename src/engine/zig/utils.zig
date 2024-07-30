@@ -17,3 +17,21 @@ pub fn FunctionCanReturnError(comptime Info: std.builtin.Type.Fn) bool {
         return false;
     }
 }
+
+pub const Profiler = struct {
+    start: std.time.Instant,
+
+    pub fn start() !Profiler {
+        return .{
+            .start = try std.time.Instant.now(),
+        };
+    }
+
+    pub fn end(self: *const Profiler) !void {
+        const e = try std.time.Instant.now();
+        const elapsed = e.since(self.start);
+
+        const fElapsed = @as(f64, @floatFromInt(elapsed)) / @as(f32, std.time.ns_per_s);
+        std.log.info("{d:.3}s", .{fElapsed});
+    }
+};
