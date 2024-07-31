@@ -1,7 +1,8 @@
 # Antlene
 
-This is a toy 3D engine under heavy development, it will be targeted towards top down RPG games.
-I'm trying to make most of the dependencies myself, some of them are currently under development and not yet used here.
+This is a toy 2.5D engine under heavy development, it will be targeted towards open world RPG game.
+
+Uses Zig 0.13.0
 
 | Tech   | Repo                                                             |
 |--------|------------------------------------------------------------------|
