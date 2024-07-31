@@ -40,12 +40,13 @@
         .znoise = .{
             .path = "./extern/zig-gamedev/libs/znoise",
         },
-        .zig_ecs = .{
-            .path = "./extern/zig-ecs",
-        },
         .zigrc = .{
             .url = "https://github.com/Aandreba/zigrc/archive/6d9c545c71ceb6d45775a3063885b7510f2399e6.tar.gz",
             .hash = "1220aaafcca6b105c611f1cc94633033482f87cfec4bfbc3670e58f0a37d88334e85",
+        },
+        .entt = .{
+            .url = "https://github.com/hkzsm/zig-ecs/archive/7235e89135e8c8107bff691d73923b56a1c7d628.tar.gz",
+            .hash = "122078b9e5a7d0517e5c3e0fec76ace629a6f9b0234e7c523b5751f3e3282c278f4f",
         },
     },
 }
