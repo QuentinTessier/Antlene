@@ -12,8 +12,6 @@ pipeline: Graphics.GraphicPipeline,
 indices: Graphics.Buffer,
 vertices: Graphics.Buffer,
 
-firstPass: bool = true,
-
 const Vertex = struct {
     uv: [2]f32,
 };

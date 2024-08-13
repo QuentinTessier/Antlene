@@ -29,8 +29,6 @@ currentIndex: usize = 0,
 
 defaultSampler: Graphics.Sampler,
 
-firstPass: bool = true,
-
 pub fn init(allocator: std.mem.Allocator) !IsometricRenderer {
     const vertexSource = try Graphics.Shader.loadFile(allocator, .glsl, "./assets/Shaders/isometric/isometric.vert");
     defer allocator.free(vertexSource);
@@ -117,8 +115,8 @@ pub fn execute(self: IsometricRenderer) !void {
 pub fn batch(self: *IsometricRenderer) !void {
     self.vertexBuffer.updateData(std.mem.sliceAsBytes(self.vertices[0..self.currentVertex]), 0);
     try Graphics.Rendering.toSwapchain(.{
-        .colorLoadOp = if (self.firstPass) .clear else .keep,
-        .depthLoadOp = if (self.firstPass) .clear else .keep,
+        .colorLoadOp = .keep,
+        .depthLoadOp = .keep,
         .clearDepthValue = 1.0,
         .viewport = .{},
     }, self.*);

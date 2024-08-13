@@ -29,14 +29,9 @@ pub const Singletons = void;
 pub const PipelineStep: Pipeline.PipelineStep = .OnFrameValidate;
 pub const Priority: i32 = 100;
 
-pub fn begin(_: *ecs.Registry, _: Singletons) void {
-    RendererFrontEnd.isometricRenderer.firstPass = true;
-}
-
 pub fn end(_: *ecs.Registry, _: Singletons) void {
     RendererFrontEnd.isometricRenderer.batch() catch {};
     RendererFrontEnd.isometricRenderer.flush();
-    RendererFrontEnd.isometricRenderer.firstPass = false;
 }
 
 pub fn each(_: *ecs.Registry, _: ecs.Entity, components: Components, _: Singletons) !void {

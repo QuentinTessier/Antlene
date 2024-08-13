@@ -23,6 +23,7 @@ tiles: std.ArrayListUnmanaged(Tile) = .{},
 gpuBuffer: ?Graphics.Buffer = null,
 
 pub const MaxChunkGPUBufferSize = (@sizeOf(Tile) * ChunkSize * ChunkSize * ChunkSize) + @sizeOf(f32) * 2;
+pub const ChunkNoPositionGPUBufferSize = (@sizeOf(Tile) * ChunkSize * ChunkSize * ChunkSize);
 pub const MaxChunkIndicesBufferSize = ChunkSize * ChunkSize * ChunkSize * 6 * @sizeOf(u16);
 // layout(std430, binding = ?) readonly buffer Chunk {
 //      vec2 worldOffset;

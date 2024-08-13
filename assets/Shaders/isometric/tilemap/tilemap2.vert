@@ -1,5 +1,7 @@
 #version 460 core
 
+const int ChunkNoPositionGPUBufferSize = 4 * 32 * 32 * 32;
+
 layout(location = 0) in vec2 v_UV;
 
 layout (std140, binding = 0) uniform SceneData {
@@ -9,7 +11,7 @@ layout (std140, binding = 0) uniform SceneData {
 };
 
 layout (std430, binding = 2) readonly buffer Chunk {
-    vec2 WorldOffset;
+    vec2 WorldOffset[9];
     uint vertices[];
 };
 
@@ -19,13 +21,6 @@ out vec3 f_TileData;
 out vec3 f_OriginalTileData;
 out vec2 f_UV;
 out float f_Depth;
-
-const float TileWidth = 32;
-const float TileHeight = 32;
-const float TileSetWidth = 192;
-const float TileSetHeight = 288;
-const uint TileOnX = 6;
-const uint TileOnY = 9;
 
 vec3 getPosition(uint data)
 {
@@ -43,7 +38,7 @@ uint getTileId(uint data)
 
 uint getVertexData()
 {
-    return vertices[gl_InstanceID];
+    return vertices[gl_DrawID * ChunkNoPositionGPUBufferSize + gl_InstanceID];
 }
 
 
@@ -52,27 +47,11 @@ float toRange(vec2 r1, vec2 r2, float t)
     return ((t - r1.x) / (r1.y - r1.x)) * (r2.y - r2.x) + r2.x;
 }
 
-
-vec4 getTileRegion(uint tileID)
-{
-    uint X = tileID % TileOnX;
-    uint Y = tileID / TileOnX;
-
-    float offsetX = float(X) * TileWidth;
-    float offsetY = float(Y) * TileHeight;
-
-    float uvOffsetX = (X == 0) ? 0.0 : offsetX / TileSetWidth;
-    float uvOffsetY = (Y == 0) ? 0.0 : offsetY / TileSetHeight;
-
-    return vec4(uvOffsetX, uvOffsetY, 0.1666666, 0.1111111);    
-}
-
 void main() 
 {
-    uint index = gl_InstanceID;
+    uint index = gl_DrawID * ChunkNoPositionGPUBufferSize + gl_InstanceID;
     uint data = getVertexData();
     vec3 p = getPosition(data);
-    vec4 region = getTileRegion(getTileId(data));
 
     vec4 offsets[4] = {
         vec4(0, 0, 0, 0),
@@ -85,7 +64,7 @@ void main()
     vec4 rotated = orientation * centered;
     vec4 offcentered = rotated + vec4(15.5, 15.5, 0, 0);
 
-    vec4 WorldCoords = vec4(WorldOffset, 0, 1.0);
+    vec4 WorldCoords = vec4(WorldOffset[gl_DrawID], 0, 1.0);
 
     f_TileData = vec3(offcentered.x, offcentered.y, p.z);
     f_OriginalTileData = p;
@@ -97,6 +76,6 @@ void main()
     vec4 baseVert = projectionMatrix * baseIsoPosition;
     vec4 vert = projectionMatrix * isoPosition;
     f_Depth = toRange(vec2(-1, 1), vec2(0, 1), baseVert.y) * 0.5 + abs(1.0 - p.z / 32) * 0.5;
-    f_UV = v_UV * region.zw + region.xy; 
+    f_UV = v_UV * vec2(0.16666, 0.11111) + vec2(0, 0); 
     gl_Position = vec4(vert.xy, 0.0, 1.0);
 }

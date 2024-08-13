@@ -33,6 +33,19 @@ pub fn deinit(self: *TextureRegistry) void {
     self.texturePool.deinit();
 }
 
+pub fn findTextureFromPath(self: *TextureRegistry, path: []const u8) ?TexturePool.Handle {
+    var ite = self.texturePool.liveHandles();
+
+    return blk: {
+        while (ite.next()) |handle| {
+            if (self.texturePool.getColumnAssumeLive(handle, .path)) |p| {
+                if (std.mem.eql(u8, p, path)) break :blk handle;
+            }
+        }
+        break :blk null;
+    };
+}
+
 pub fn addTexture(self: *TextureRegistry, path: ?[]const u8, texture: Graphics.Texture) !TexturePool.Handle {
     return self.texturePool.add(.{
         .texture = texture,

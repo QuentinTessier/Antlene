@@ -3,8 +3,8 @@ const Antlene = @import("antlene");
 
 pub const applicationCreateInfo: Antlene.Application.ApplicationCreateInfo = .{
     .name = "Testbed",
-    .width = 1280,
-    .height = 720,
+    .width = 1920,
+    .height = 1080,
     .initialize = initialize,
 };
 
@@ -64,8 +64,9 @@ fn fillChunk(allocator: std.mem.Allocator, tiles: *std.ArrayListUnmanaged(Antlen
         for (0..Antlene.Components.Chunk.ChunkSize) |y| {
             const X = @as(i32, @intCast(x)) + id[0] * 32;
             const Y = @as(i32, @intCast(y)) + id[1] * 32;
-            const noise_value = gen.noise2(@floatFromInt(X), @floatFromInt(Y));
-            const iLevel: usize = @intFromFloat(@abs(1 - noise_value) * 16);
+            const noise_value = @abs(1 - gen.noise2(@floatFromInt(X * 2), @floatFromInt(Y * 2))) * 16.0;
+            const fLevel = std.math.modf(noise_value).fpart;
+            const iLevel: usize = @intFromFloat(std.math.modf(noise_value).ipart + 1);
             for (0..iLevel) |z| {
                 const tile = Antlene.Components.Chunk.Tile{
                     .x = @intCast(x),
@@ -75,35 +76,14 @@ fn fillChunk(allocator: std.mem.Allocator, tiles: *std.ArrayListUnmanaged(Antlen
                 };
                 try tiles.append(allocator, tile);
             }
-        }
-    }
-}
-
-fn updateChunk(registry: *Antlene.ecs.Registry, _: Antlene.ecs.Entity) void {
-    var view = registry.view(.{Antlene.Components.Chunk}, .{});
-    var ite = view.entityIterator();
-
-    const seed = rng.int(i32);
-    while (ite.next()) |e| {
-        var chunk: *Antlene.Components.Chunk = view.get(e);
-
-        chunk.tiles.clearRetainingCapacity();
-        fillChunk(registry.singletons().get(*Antlene.Application).*.allocator, &chunk.tiles, chunk.id, seed) catch {
-            std.log.err("Failed to fill chunk", .{});
-        };
-        if (chunk.gpuBuffer) |*buffer| {
-            if ((chunk.tiles.items.len * @sizeOf(Antlene.Components.Chunk.Tile) + 2 * @sizeOf(f32)) != buffer.size) {
-                buffer.deinit();
-                var newBuffer = Antlene.Graphics.Resources.CreateBuffer(
-                    null,
-                    .{ .size = @sizeOf(f32) * 2 + @sizeOf(Antlene.Components.Chunk.Tile) * chunk.tiles.items.len },
-                    .{ .dynamic = true },
-                );
-                newBuffer.updateData(std.mem.sliceAsBytes(&[2]f32{ chunk.worldPosition[0], chunk.worldPosition[1] }), 0);
-                newBuffer.updateData(std.mem.sliceAsBytes(chunk.tiles.items), @sizeOf(f32) * 2);
-                chunk.gpuBuffer = newBuffer;
-            } else {
-                buffer.updateData(std.mem.sliceAsBytes(chunk.tiles.items), @sizeOf(f32) * 2);
+            if (fLevel > 0.5) {
+                const tile = Antlene.Components.Chunk.Tile{
+                    .x = @intCast(x),
+                    .y = @intCast(y),
+                    .z = @intCast(iLevel),
+                    .id = 1,
+                };
+                try tiles.append(allocator, tile);
             }
         }
     }
@@ -151,18 +131,19 @@ pub fn initialize(application: *Antlene.Application) !void {
         .logic = &change_orientation,
     });
 
-    const b = application.registry.create();
-    application.registry.add(b, Antlene.Components.ConditionalLogic.KeyEventLogic{
-        .keycode = .P,
-        .state = .Released,
-        .logic = &updateChunk,
-    });
-
     const chunks: [9]@Vector(2, i32) = .{
         .{ -1, -1 }, .{ 0, -1 }, .{ 1, -1 },
         .{ -1, 0 },  .{ 0, 0 },  .{ 1, 0 },
         .{ -1, 1 },  .{ 0, 1 },  .{ 1, 1 },
     };
+
+    // const chunks: [25]@Vector(2, i32) = .{
+    //     .{ -2, -2 }, .{ -1, -2 }, .{ 0, -2 }, .{ 1, -2 }, .{ 2, -2 },
+    //     .{ -2, -1 }, .{ -1, -1 }, .{ 0, -1 }, .{ 1, -1 }, .{ 2, -1 },
+    //     .{ -2, 0 },  .{ -1, 0 },  .{ 0, 0 },  .{ 1, 0 },  .{ 2, 0 },
+    //     .{ -2, 1 },  .{ -1, 1 },  .{ 0, 1 },  .{ 1, 1 },  .{ 2, 1 },
+    //     .{ -2, 2 },  .{ -1, 2 },  .{ 0, 2 },  .{ 1, 2 },  .{ 2, 2 },
+    // };
 
     const seed = rng.int(i32);
     for (chunks) |c| {

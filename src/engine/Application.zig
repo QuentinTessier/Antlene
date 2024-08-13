@@ -11,6 +11,7 @@ const Profiler = @import("./zig/utils.zig").Profiler;
 const EventBus = @import("core/EventBus.zig");
 
 pub const RendererFrontend = @import("./core/RendererFrontend.zig");
+pub const AssetStorage = @import("./core/assets/AssetStorage.zig");
 
 pub const Application = @This();
 
@@ -29,6 +30,7 @@ window: Window,
 allocator: std.mem.Allocator,
 isRunning: bool = true,
 registry: ecs.Registry,
+assetStorage: AssetStorage,
 
 pub fn init(allocator: std.mem.Allocator, createInfo: ApplicationCreateInfo) !*Application {
     const app = try allocator.create(Application);
@@ -40,6 +42,7 @@ pub fn init(allocator: std.mem.Allocator, createInfo: ApplicationCreateInfo) !*A
             .context = .{ .OpenGL = .{ .major = 4, .minor = 6 } },
         }, app),
         .registry = ecs.Registry.init(allocator),
+        .assetStorage = AssetStorage.init(allocator),
     };
 
     try Graphics.init(allocator, struct {
@@ -48,6 +51,8 @@ pub fn init(allocator: std.mem.Allocator, createInfo: ApplicationCreateInfo) !*A
         }
     }.loadFn);
     Graphics.resizeFramebuffer(app.window.extent.width, app.window.extent.height);
+    Graphics.gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    Graphics.gl.clearDepthf(1.0);
 
     app.registry.singletons().add(app);
 
@@ -71,6 +76,7 @@ pub fn deinit(self: *Application) !void {
 
     RendererFrontend.deinit(self.allocator);
     self.registry.deinit();
+    self.assetStorage.deinit();
 }
 
 pub fn shouldClose(self: *Application) bool {
@@ -99,6 +105,7 @@ pub fn onFrameUpdate(self: *Application) !void {
 pub fn onFrameValidate(self: *Application) !void {
     //const p = try Profiler.start();
 
+    Graphics.gl.clear(Graphics.gl.COLOR_BUFFER_BIT | Graphics.gl.DEPTH_BUFFER_BIT);
     try Pipeline.exec(&self.registry, .OnFrameValidate);
 
     //try p.end();

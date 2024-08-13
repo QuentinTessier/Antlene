@@ -21,12 +21,23 @@ fn addAntleneModules(
     antlene.linkLibrary(znoise_dep.artifact("FastNoiseLite"));
     antlene.addImport("zigimg", zigimg_dep.module("zigimg"));
     antlene.addImport("zpool", zpool_dep.module("root"));
-    antlene.addImport("zjobs", zjobs_dep.module("root"));
     antlene.addImport("AntleneWindowSystem", window_dep.module("AntleneWindowSystem"));
     antlene.addImport("AntleneMath", math_dep.module("AntleneMath"));
     antlene.addImport("AntleneOpenGL", opengl_dep.module("AntleneOpenGL"));
     antlene.addImport("ecs", ecs_dep.module("zig-ecs"));
-    antlene.linkLibrary(rc_dep.artifact("zig-rc"));
+    antlene.addImport("rc", &rc_dep.artifact("zig-rc").root_module);
+}
+
+fn devAddModulesToExe(engine: *std.Build.Module, exe: *std.Build.Step.Compile) void {
+    exe.root_module.addImport("zjobs", engine.import_table.get("zjobs") orelse unreachable);
+    exe.root_module.addImport("znoise", engine.import_table.get("znoise") orelse unreachable);
+    exe.root_module.addImport("zigimg", engine.import_table.get("zigimg") orelse unreachable);
+    exe.root_module.addImport("zpool", engine.import_table.get("zpool") orelse unreachable);
+    exe.root_module.addImport("AntleneWindowSystem", engine.import_table.get("AntleneWindowSystem") orelse unreachable);
+    exe.root_module.addImport("AntleneMath", engine.import_table.get("AntleneMath") orelse unreachable);
+    exe.root_module.addImport("AntleneOpenGL", engine.import_table.get("AntleneOpenGL") orelse unreachable);
+    exe.root_module.addImport("ecs", engine.import_table.get("ecs") orelse unreachable);
+    exe.root_module.addImport("rc", engine.import_table.get("rc") orelse unreachable);
 }
 
 pub fn buildAntleneGame(
@@ -52,6 +63,7 @@ pub fn buildAntleneGame(
 
     exe.root_module.addImport("antlene", engine);
     exe.root_module.addImport("game", game);
+    devAddModulesToExe(engine, exe);
     return exe;
 }
 
